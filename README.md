@@ -11,7 +11,7 @@ This portfolio is a collection of real projects, production systems, technical d
 ### AEOBoost
 **Live production SaaS | AI Search Visibility**
 
-AEOBoost is a production B2B SaaS application for SEO professionals working on AEO/GEO. It includes authentication, persistent data, AI/LLM integrations, analytics, reporting, security controls, and production infrastructure.
+AEOBoost is a production B2B SaaS application for SEO professionals working on AEO/GEO. It includes authentication, persistent data, AI/LLM integrations, scraping, analytics, reporting, security controls, and production infrastructure.
 
 **Website:** https://aeoboost.app
 
