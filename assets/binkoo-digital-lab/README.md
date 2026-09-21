@@ -1,23 +1,15 @@
-# BinkoO Digital Lab Assets
+# BinkoO Digital Lab Visual Evidence
 
-## Website Screenshots
+## Website
 
-[PLACEHOLDER: add screenshots of the homepage, main pages, services, blog, and other representative sections]
+![BinkoO Hero Section](BDL%20Hero%20section.png)
+
+![BinkoO About](BDL%20about.png)
+
+![BinkoO Portfolio](BDL%20portfolio.png)
+
+![BinkoO Blog](BDL%20Blog.png)
 
 ## Architecture
 
-[PLACEHOLDER: add the public-safe architecture / system diagram as architecture.png]
-
-## Suggested Structure
-
-~~~text
-assets/binkoo-digital-lab/
-├── architecture.png
-├── screenshots/
-│   ├── 01-homepage.png
-│   ├── 02-services.png
-│   ├── 03-about-or-company.png
-│   ├── 04-blog.png
-│   └── 05-article-page.png
-└── README.md
-~~~
+![BinkoO Website Architecture](diagram%20BDL%20Website.png)
