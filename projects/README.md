@@ -8,6 +8,10 @@ This section contains documented applications and development projects.
 - [Kouma](kouma/README.md)
 - [BinkoO Digital Lab](binkoo-digital-lab/README.md)
 
+## Additional Experience
+
+- [E-commerce & International Sourcing](../experience/e-commerce/README.md)
+
 ## Other Projects
 
 - [Web Projects](web-projects/README.md)
