@@ -2,85 +2,79 @@
 
 ### Human Resources | AI | Automation | Digital Transformation
 
-I am a Human Resources Management professional in training with hands-on experience building digital products, AI-powered applications, automation workflows, and web projects.
+I am a Human Resources Management graduate with hands-on experience building and operating AI-powered applications, automation workflows, professional websites, and digital products.
 
-This portfolio documents practical work across AI applications, web design and development, automation, data workflows, infrastructure, and digital marketing.
+This portfolio is a collection of real projects, production systems, technical documentation, and visual evidence.
 
-## About Me
-
-My background combines **Human Resources Management** with practical work in:
-
-- AI-powered applications and LLM integrations
-- Automation with n8n
-- Web design and multi-page website development
-- Web applications and digital products
-- Data extraction, transformation, and processing
-- APIs and third-party integrations
-- WordPress and content automation
-- Linux, Docker, VPS, and deployment environments
-- Digital marketing, community management, and paid social campaigns
-
-I learn by building. This portfolio focuses on what I have actually built, designed, configured, integrated, tested, and maintained.
-
-## Selected Projects
+## Featured Production Work
 
 ### AEOBoost
-**AI Search Visibility SaaS for SEO Professionals**
+**Live production SaaS | AI Search Visibility**
 
-AEOBoost helps SEO professionals analyze and improve website visibility in AI-powered search experiences.
+AEOBoost is a production B2B SaaS application for SEO professionals working on AEO/GEO. It includes authentication, persistent data, AI/LLM integrations, analytics, reporting, security controls, and production infrastructure.
 
 **Website:** https://aeoboost.app
+
+AEOBoost reached approximately **30 users during its first week after launch**.
 
 [Explore AEOBoost →](projects/aeoboost/README.md)
 
 ### Kouma
-**RAG-Based AI Assistant**
+**Live production SaaS | RAG & Conversational AI**
 
-Kouma is an AI application built around retrieval-augmented generation, document processing, and AI integrations.
+Kouma is a production conversational AI platform built around RAG, document processing, vector search, multi-model AI integration, lead capture, and an embeddable website widget.
 
 **Website:** https://kouma.app
 
 [Explore Kouma →](projects/kouma/README.md)
 
 ### BinkoO Digital Lab
-**Web Design, Digital Product & Automation Project**
+**Professional Web Design, Digital Product & Automation Ecosystem**
 
-BinkoO Digital Lab is an independent digital activity through which I have designed and developed a professional multi-page website, its visual system, digital content, and connected automation workflows.
+BinkoO Digital Lab is an independent personal digital activity through which I designed and developed a professional multi-page website and connected AI/automation systems.
 
-The BinkoO website combines a carefully designed user experience with an automated content pipeline: AI-assisted article production is handled by an n8n workflow, articles are published to WordPress, and the BinkoO website presents that content through a custom-designed blog experience.
+The BinkoO website is connected to an n8n content pipeline that generates and enriches articles, publishes them to WordPress, and feeds the site's designed blog experience.
 
 **Website:** https://binkoo.digital
 
 [Explore BinkoO Digital Lab →](projects/binkoo-digital-lab/README.md)
 
-### n8n AI Content & AEO Automation
-End-to-end content research, AI generation, SEO/AEO enrichment, WordPress publishing, indexing, database, and monitoring workflow.
+## Automation
 
-[Explore the workflow →](automation/n8n-content-aeo/README.md)
+### AI Content & AEO Automation
+Production workflow connecting research, AI generation, SEO/AEO enrichment, WordPress publication, indexing-related actions, databases, media, scheduling, and monitoring.
 
-### Automated Lead Collection & Enrichment
-Business lead collection, web scraping, AI-assisted qualification, routing, and database storage workflow.
+[Explore the workflow →](automation/n8n-blog-automation-aeo%26seo/README.md)
+
+### Lead Collection & Enrichment
+Workflow for business discovery, web scraping, data enrichment, AI-assisted qualification, routing, and database storage.
 
 [Explore the workflow →](automation/n8n-lead-enrichment/README.md)
 
-### Job Offer Aggregator
-An automation project in progress for collecting, normalizing, filtering, deduplicating, and notifying about job offers.
+### Outreach & Emailing
+Database-driven email outreach workflow with validation, AI-assisted message preparation, sequencing, logging, and notifications.
 
-[View the project →](projects/job-offer-aggregator/README.md)
+[Explore the workflow →](automation/n8n-message-outreach-%26-emailing/README.md)
+
+## Infrastructure & Engineering
+
+My projects also include practical work around Linux, VPS environments, Docker, reverse proxies, DNS, deployment, analytics, monitoring, Git/GitHub, and production troubleshooting.
+
+[Explore infrastructure →](infrastructure/README.md)
 
 ## Technical Areas
 
 | Area | Tools / Technologies |
 | --- | --- |
-| AI & LLMs | Gemini, Cohere, LLM chains, AI agents, RAG |
+| AI & LLMs | Gemini, Cohere, OpenRouter, LLM chains, AI agents, RAG |
 | Automation | n8n, scheduled workflows, routing, batch processing |
-| Web Design & Development | HTML, CSS, JavaScript, responsive interfaces, WordPress |
-| Data | PostgreSQL, Supabase, SQL, extraction and transformation |
-| APIs | REST APIs, third-party services, webhooks |
-| Infrastructure | Linux, Ubuntu, Docker, VPS, Traefik, DNS |
-| Analytics | PostHog |
+| Web Design & Development | HTML, CSS, JavaScript, React, TypeScript, WordPress |
+| Data | PostgreSQL, Supabase, SQL, pgvector, extraction and transformation |
+| APIs & Integrations | REST APIs, webhooks, third-party services |
+| Infrastructure | Linux, Ubuntu, Docker, VPS, Traefik, DNS, Cloud Run |
+| Analytics & Monitoring | PostHog, Sentry |
 | Digital | Community management, content creation, Meta Ads, TikTok Ads |
-| Development | Git, GitHub, AI-assisted development |
+| Version Control | Git, GitHub |
 
 ## Independent Projects & Availability
 
@@ -96,7 +90,7 @@ Commercial and private projects are represented through public-safe documentatio
 
 ## Portfolio Structure
 
-~~~text
+```text
 portfolio/
 ├── projects/
 │   ├── aeoboost/
@@ -105,13 +99,14 @@ portfolio/
 │   ├── web-projects/
 │   └── job-offer-aggregator/
 ├── automation/
-│   ├── n8n-content-aeo/
-│   └── n8n-lead-enrichment/
+│   ├── n8n-blog-automation-aeo&seo/
+│   ├── n8n-lead-enrichment/
+│   └── n8n-message-outreach-&-emailing/
 ├── infrastructure/
 ├── digital-marketing/
 ├── python/
 └── assets/
-~~~
+```
 
 ## Contact
 
