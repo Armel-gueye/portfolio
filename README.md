@@ -91,6 +91,8 @@ For approximately one year, I independently managed a small-scale e-commerce act
 
 This experience provided practical exposure to **international sourcing, supplier negotiation, logistics coordination, inventory management, purchasing, and sales**.
 
+[View the e-commerce experience and supporting receipts →](experience/e-commerce/README.md)
+
 ## Independent Projects & Availability
 
 My digital projects are personal and independent initiatives developed alongside my studies to build practical experience. They are flexible and can be placed on hold when I take on a full-time professional commitment.
@@ -120,6 +122,8 @@ portfolio/
 ├── infrastructure/
 ├── digital-marketing/
 ├── python/
+├── experience/
+│   └── e-commerce/
 └── assets/
 ```
 
