@@ -56,7 +56,8 @@ The application uses a React frontend, Node.js/Express backend, Supabase/Postgre
 Kouma includes the operational components expected from a real SaaS application:
 
 - Authentication and protected application areas
-- Automated transactional email delivery
+- Automated onboarding / welcome and transactional email flows
+- Product analytics and event tracking with PostHog
 - Persistent application, conversation, and lead data
 - Vector storage and retrieval infrastructure
 - Application error monitoring
