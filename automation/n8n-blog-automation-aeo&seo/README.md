@@ -76,11 +76,10 @@ See the complete project: [BinkoO Digital Lab](../../projects/binkoo-digital-lab
 
 ![n8n AI Content & AEO Workflow](../../assets/n8n/Wordpress%20Blog%20automation.png)
 
-## Workflow JSON
+## Here is the JSON of the Workflow 
 
 [workflow.json](workflow.json)
 
-The published JSON should remain sanitized of credentials, tokens, private endpoints, secrets, and other sensitive configuration.
 
 ## Skills Demonstrated
 
