@@ -23,7 +23,14 @@ The activity involved the complete process from supplier negotiation and purchas
 
 ## Supporting Evidence
 
-[PLACEHOLDER: Add selected Alibaba order receipts or other purchase documentation here if appropriate for public sharing.]
+The repository includes four Alibaba order receipts documenting the purchasing side of this activity:
+
+- [Alibaba Order Receipt - 263612130501027081](receipt-263612130501027081.pdf)
+- [Alibaba Order Receipt - 263813046001027081](receipt-263813046001027081.pdf)
+- [Alibaba Order Receipt - 264103842001027081](receipt-264103842001027081.pdf)
+- [Alibaba Order Receipt - 267094066501027081](receipt-267094066501027081.pdf)
+
+These documents are provided as supporting evidence of actual international sourcing and purchasing activity.
 
 Only documents that contain no sensitive personal, financial, supplier, address, payment, or account information should be published publicly.
 
