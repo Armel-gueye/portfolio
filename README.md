@@ -1,4 +1,4 @@
-# ARMEL GUEYE
+# GUEYE CHEICK ARMEL
 
 ### Human Resources | AI | Automation | Digital Transformation
 
@@ -66,13 +66,13 @@ My projects also include practical work around Linux, VPS environments, Docker, 
 
 | Area | Tools / Technologies |
 | --- | --- |
-| AI & LLMs | Gemini, Cohere, OpenRouter, LLM chains, AI agents, RAG |
+| AI & LLMs | Claude Code, OpenAI, Gemini, Cohere, OpenRouter, LLM chains, AI agents, RAG |
 | Automation | n8n, scheduled workflows, routing, batch processing |
 | Web Design & Development | HTML, CSS, JavaScript, React, TypeScript, WordPress |
 | Data | PostgreSQL, Supabase, SQL, pgvector, extraction and transformation |
 | APIs & Integrations | REST APIs, webhooks, third-party services |
 | Infrastructure | Linux, Ubuntu, Docker, VPS, Traefik, DNS, Cloud Run |
-| Analytics & Monitoring | PostHog, Sentry |
+| Analytics & Monitoring | Google Search Console, PostHog, Sentry |
 | Digital | Community management, content creation, Meta Ads, TikTok Ads |
 | Version Control | Git, GitHub |
 
