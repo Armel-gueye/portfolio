@@ -54,7 +54,7 @@ Telegram Notifications & Monitoring
 | Content | WordPress REST API |
 | Database | PostgreSQL |
 | Media | Unsplash |
-| Deployment / Build | Netlify |
+| Deployment / Build | Vercel |
 | Notifications | Telegram |
 | Indexing | Google Indexing API |
 
