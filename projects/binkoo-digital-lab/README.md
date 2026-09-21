@@ -1,77 +1,100 @@
 # BinkoO Digital Lab
 
-## Web Design, Digital Product & Automation Project
+## Professional Website, Web Design & Automation Ecosystem
 
-**Website:** https://binkoo.digital
+**Live website:** https://binkoo.digital
 
-BinkoO Digital Lab is an independent digital activity through which I have designed and developed a professional multi-page website and a broader digital ecosystem combining web design, content, AI, and automation.
+BinkoO Digital Lab is an **independent personal digital activity** through which I designed and developed a professional multi-page website and a connected digital ecosystem combining web design, content, WordPress, AI, and automation.
 
-The website is one of the main practical projects in this portfolio because it demonstrates both **visual design work** and **technical integration**.
+This project is one of the main portfolio pieces because it demonstrates both **visual design work** and the ability to connect a polished website to real automation systems.
 
-## My Role
+## The Website
 
-I was responsible for the design and development of the digital experience, including:
+The BinkoO website was developed as a professional business-facing digital presence rather than a simple coding exercise.
 
-- Website structure and page organization
-- Visual direction and UI design
-- Layouts, typography, spacing, and responsive presentation
-- Web implementation and interface refinement
-- WordPress content integration
-- Blog presentation
-- Integration with automated content workflows
-- Ongoing iteration and visual improvements
+I spent an extended period refining the site's:
 
-The website was developed as a real business-facing digital presence rather than as a simple coding exercise.
+- Visual identity and overall design direction
+- Page structure and content hierarchy
+- Typography, spacing, composition, and responsive layouts
+- UI details and interaction patterns
+- Portfolio and service presentation
+- Blog experience
+- Overall user experience
+
+The repository contains screenshots of representative pages and a system diagram showing the site's architecture.
 
 ## Content Automation Pipeline
 
-The BinkoO blog is connected to an n8n content automation workflow.
+An important part of the project is the connection between the website and the automated blog production system.
 
-The workflow handles research and AI-assisted article production, prepares the content for publication, and sends the article directly to WordPress.
-
-The BinkoO website then retrieves and presents the published articles through a carefully designed blog interface.
-
-~~~text
-Research
-   ↓
-AI-assisted content generation
-   ↓
-n8n automation
-   ↓
+```text
+Topic research
+      ↓
+AI-assisted article production
+      ↓
+n8n workflow
+      ↓
 WordPress
-   ↓
-BinkoO Digital Lab website
-   ↓
+      ↓
+BinkoO website
+      ↓
 Designed blog experience
-~~~
+```
 
-This creates a practical connection between **AI, automation, WordPress, and web design**.
+The n8n workflow researches topics, generates and enriches articles, prepares SEO/AEO elements, handles media, and publishes the resulting content directly to WordPress.
 
-## Visual Design
+The BinkoO website then presents the published articles through a deliberately designed blog interface.
 
-The website was designed with particular attention to:
+This creates a complete practical chain connecting **AI + automation + WordPress + web design**.
 
-- Visual consistency
-- Modern interface patterns
-- Responsive layouts
-- Section composition
-- Typography hierarchy
-- Spacing and alignment
-- Content presentation
-- Overall user experience
+## My Role
 
-**Website screenshots:**  
-[PLACEHOLDER: add screenshots under ../../assets/binkoo-digital-lab/screenshots/]
+I handled the project across design, implementation, integration, and visual refinement.
 
-**Architecture / system diagram:**  
-[PLACEHOLDER: add public-safe architecture diagram → ../../assets/binkoo-digital-lab/architecture.png]
+### Web Design & Development
 
-**Additional design evidence:**  
-[PLACEHOLDER: add selected page captures, blog captures, or design details]
+- Designed the visual direction and interface
+- Structured the multi-page website
+- Refined layouts, spacing, typography, and visual hierarchy
+- Worked on responsive presentation
+- Implemented and iterated the website
+- Designed the blog and article presentation experience
+
+### Automation & Integration
+
+- Connected the site's content strategy to an n8n automation workflow
+- Integrated WordPress as the publishing layer
+- Worked with AI-generated content and SEO/AEO enrichment
+- Connected supporting services used by the content pipeline
+
+## Client Project & Remote Training
+
+Beyond the BinkoO website itself, this activity also involved delivering a WordPress website project for a client located in another city.
+
+The client onboarding and training were conducted **100% remotely through video conferencing**, including practical guidance on using and managing the website.
+
+This experience demonstrates the ability to communicate technical concepts, train users, and provide project support entirely online.
+
+## Visual Evidence
+
+### Website
+
+![BinkoO Hero Section](../../assets/binkoo-digital-lab/BDL%20Hero%20section.png)
+
+![BinkoO About](../../assets/binkoo-digital-lab/BDL%20about.png)
+
+![BinkoO Portfolio](../../assets/binkoo-digital-lab/BDL%20portfolio.png)
+
+![BinkoO Blog](../../assets/binkoo-digital-lab/BDL%20Blog.png)
+
+### Architecture
+
+![BinkoO Website Architecture](../../assets/binkoo-digital-lab/diagram%20BDL%20Website.png)
 
 ## Technical Documentation
 
-[PLACEHOLDER: add a public-safe BinkoO Digital Lab technical overview → technical-overview.md]
+[PLACEHOLDER: add an approved public-safe technical overview as technical-overview.md]
 
 ## Project Status
 
@@ -79,18 +102,8 @@ The website was designed with particular attention to:
 
 BinkoO Digital Lab is an **informal personal activity, not a registered company**. It was created and managed as a practical environment for developing digital, AI, automation, web design, and business skills.
 
-The activity is flexible and can be placed on hold when full-time professional commitments require my complete availability.
+The activity is flexible and can be placed on hold when a full-time professional commitment requires complete availability.
 
-## Public-Safe Documentation
+## Public Portfolio Scope
 
-Only material suitable for public sharing should be added to this repository.
-
-Do not publish:
-
-- API keys or tokens
-- Passwords or authentication secrets
-- Database credentials
-- Private environment variables
-- Private infrastructure endpoints
-- Sensitive client information
-- Proprietary code that should remain private
+Only public-safe material should be published here. Do not include passwords, API keys, authentication secrets, private infrastructure endpoints, sensitive client information, or proprietary code that should remain private.
