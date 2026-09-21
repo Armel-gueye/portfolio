@@ -11,8 +11,6 @@ The portfolio includes evidence from Linux/VPS environments, Docker services, DN
 - Linux / Ubuntu server administration
 - VPS environments
 - Docker and containerized services
-- Docker Compose
-- Traefik and reverse-proxy configuration
 - HTTPS / certificate handling
 - DNS configuration
 - Application deployment
