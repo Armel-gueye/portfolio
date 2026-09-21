@@ -76,6 +76,21 @@ My projects also include practical work around Linux, VPS environments, Docker, 
 | Digital | Community management, content creation, Meta Ads, TikTok Ads |
 | Version Control | Git, GitHub |
 
+## Additional Entrepreneurial Experience
+
+### E-commerce & International Sourcing
+
+For approximately one year, I independently managed a small-scale e-commerce activity involving international sourcing from Alibaba.
+
+- Negotiated with Chinese suppliers in **English**, including product prices and order details
+- Compared offers and negotiated purchasing costs
+- Coordinated shipment of goods from China to Burkina Faso through freight-forwarding / transit services
+- Managed incoming stock and inventory
+- Set prices and handled local product sales
+- Followed the purchasing and logistics process from supplier communication to final delivery
+
+This experience provided practical exposure to **international sourcing, supplier negotiation, logistics coordination, inventory management, purchasing, and sales**.
+
 ## Independent Projects & Availability
 
 My digital projects are personal and independent initiatives developed alongside my studies to build practical experience. They are flexible and can be placed on hold when I take on a full-time professional commitment.
