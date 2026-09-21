@@ -83,4 +83,4 @@ See the complete project: [BinkoO Digital Lab](../../projects/binkoo-digital-lab
 
 ## Skills Demonstrated
 
-n8n workflow automation, generative AI integration, LLM orchestration, API integration, JavaScript data transformation, PostgreSQL, WordPress automation, SEO/AEO content systems, scheduling, routing, monitoring, and error handling.
+n8n workflow automation, generative AI integration, LLM orchestration, API integration, WordPress automation, SEO/AEO content systems, scheduling, routing, monitoring, and error handling.
