@@ -1,22 +1,32 @@
 # Digital Marketing & Community Management
 
-This section documents practical digital marketing work carried out across projects and business activities.
+## Practical Digital Work
+
+This section documents hands-on digital marketing and community work carried out across independent projects and business activities.
 
 ## Areas of Work
 
 - Social media account management
 - Community management
 - Content creation
-- Generative AI and AI-assisted visual creation
-- Social media publishing
+- AI-assisted visual creation
+- Multi-platform publishing
+- Content planning and adaptation
 - Meta Ads
 - TikTok Ads
-- Content planning and adaptation across platforms
 
-The portfolio focuses on responsibilities and practical execution rather than unsupported performance claims.
+The portfolio describes responsibilities and execution rather than unsupported performance claims.
 
-## Evidence
+## Visual Evidence
 
-`[PLACEHOLDER: add selected public-safe examples or screenshots under ../assets/digital-marketing/]`
+Selected examples are shown below.
 
-Only publish account screenshots, campaign screenshots, or client materials authorized for public sharing.
+![Digital Marketing Evidence 1](../assets/digital-marketing/Capture%20d'écran%202026-09-21%20144543.png)
+
+![Digital Marketing Evidence 2](../assets/digital-marketing/Capture%20d'écran%202026-09-21%20144947.png)
+
+![Digital Marketing Evidence 3](../assets/digital-marketing/Capture%20d'écran%202026-09-21%20145402.png)
+
+![Digital Marketing Evidence 4](../assets/digital-marketing/Capture%20d'écran%202026-09-21%20145514.png)
+
+Only account screenshots, campaign screenshots, or client materials authorized for public sharing should be included.
