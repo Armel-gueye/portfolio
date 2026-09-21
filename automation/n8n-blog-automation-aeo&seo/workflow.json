@@ -1,0 +1,1390 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "url": "={{ $json.domain }}/wp-json/wp/v2/categories?per_page=100 ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -112,
+        208
+      ],
+      "id": "d96a2011-5a40-495d-a39d-d89e5e668b85",
+      "name": "Load Categories"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1934b4ae-c932-4dce-955f-2f50d03b6e6f",
+              "name": "domain",
+              "value": "https://blog.binkoo.digital",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        208
+      ],
+      "id": "df996d30-b2a8-4c23-86f6-a86c5e3d5815",
+      "name": "Config"
+    },
+    {
+      "parameters": {
+        "jsCode": "// On exclut uniquement : Non classé (1) et les doublons anciens \n// que WordPress a remplacé par 38 et 39\nconst excludeIds = [1, 11, 12, 13, 15, 17, 18, 36, 37];\n\nreturn $input.all()\n  .filter(item => !excludeIds.includes(item.json.id))\n  .map(item => {\n    const { id, name, description, link } = item.json;\n    return {\n      json: { id, name, description, link }\n    };\n  });"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        208
+      ],
+      "id": "948cc9e8-260d-435f-af1e-bcbda77ab331",
+      "name": "Category Filter"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT category_id, MAX(used_at) AS last_used_at\nFROM used_categories\nGROUP BY category_id\nORDER BY last_used_at ASC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        288,
+        208
+      ],
+      "id": "44fb8a3b-025a-41d8-9d91-5c37b3f02f9d",
+      "name": "Selecting recent",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "UFPkybsb5ST50jF0",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT title \nFROM used_categories \nWHERE category_id = {{ $json.id }}\nORDER BY used_at DESC \nLIMIT 100",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        704,
+        400
+      ],
+      "id": "edd60aba-ccdd-41f2-ad31-bae205e0b724",
+      "name": "10 latest headlines",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "UFPkybsb5ST50jF0",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiData = $(\"JSON Parser\").first().json;\nconst googleItems = $(\"googleSuggestions\").all();\n\n// Fonction pour nettoyer le slug (enlève accents et caractères spéciaux)\nconst slugify = (str) => {\n  return str\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\") // Enlève les accents\n    .replace(/[^\\w\\s-]/g, \"\")       // Enlève le reste sauf lettres/espaces\n    .replace(/[\\s_-]+/g, \"-\")       // Remplace espaces par tirets\n    .replace(/^-+|-+$/g, \"\");       // Nettoie les bords\n};\n\nlet cluster = \"\";\nconst blacklist = [\"france\", \"suisse\", \"belgique\", \"2021\", \"2022\", \"youtube\", \"tiktok\", \"gratuit\"];\n\nif (googleItems.length > 1) {\n  let suggestions = googleItems[1].json;\n  if (Array.isArray(suggestions)) {\n    cluster = suggestions\n      .map(s => s.replace(/[^\\x00-\\x7F]/g, \" \").trim())\n      .filter(s => {\n          const lowerS = s.toLowerCase();\n          return !blacklist.some(word => lowerS.includes(word)) && s.length > 2;\n      })\n      .slice(0, 7).join(', ');\n  }\n}\n\nreturn [{\n  json: {\n    title: aiData.title.trim(),\n    generated_slug: slugify(aiData.title), // <--- LE SLUG PROPRE EST ICI\n    primary_query: aiData.search_suggestions,\n    keywords_cluster: cluster\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        400
+      ],
+      "id": "b6ab37e3-490a-4edc-8011-883f5611530a",
+      "name": "New article title",
+      "executeOnce": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1776,
+        224
+      ],
+      "id": "60bf03d9-10cf-4e93-9b8a-84530766288a",
+      "name": "Merge heading"
+    },
+    {
+      "parameters": {
+        "jsCode": "let data = {};\n\n// On récupère toutes les données des nœuds précédents\n$input.all().forEach(item => {\n  Object.assign(data, item.json);\n});\n\n// --- LA CORRECTION EST ICI ---\n// On crée explicitement le champ 'category_id' que le Postgres attend\n// en copiant la valeur de 'id' (qui vient de WordPress)\nif (data.id) {\n    data.category_id = data.id;\n}\n// -----------------------------\n\nreturn [{ json: data }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1968,
+        224
+      ],
+      "id": "97a6c52f-2a1d-4af8-bd23-6a10115e0d7f",
+      "name": "Combines full post meta"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "used_categories",
+          "mode": "list",
+          "cachedResultName": "used_categories"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "category_id": "={{ $json.category_id }}",
+            "title": "={{ $('New article title').first().json.title }}",
+            "used_at": "={{ new Date().toISOString() }}",
+            "description": "={{ $json.description }}",
+            "name": "={{ $json.name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "category_id",
+              "displayName": "category_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "used_at",
+              "displayName": "used_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2320,
+        224
+      ],
+      "id": "4d731e04-14cc-4445-8179-3f7a83209f4b",
+      "name": "Updating posts DB",
+      "credentials": {
+        "postgres": {
+          "id": "UFPkybsb5ST50jF0",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.unsplash.com/photos/random",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $('Final_Formatter').item.json.unsplash_query }}"
+            },
+            {
+              "name": "orientation",
+              "value": "landscape"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        4976,
+        544
+      ],
+      "id": "e9477aeb-6e3c-46c2-9f4d-6cf8539a9209",
+      "name": "Unsplash Search",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "**************",
+          "name": "Unsplash"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet imageId = null;\nlet content = '';\nlet postTitle = 'Article sans titre';\nlet categoryId = 1;\nlet tagsList = '';\n\ntry {\n  content = $('AEO_Formatter').first().json.article_final;\n  tagsList = $('Final_Formatter').first().json.tags_list;\n} catch (e) {\n  content = '';\n}\n\ntry {\n  const pickedCategory = $('Picks Less Used').first().json;\n  if (pickedCategory && pickedCategory.id) {\n    categoryId = parseInt(pickedCategory.id, 10);\n  }\n} catch(e) {}\n\nif (content) {\n  const h1Match = content.match(/<h1[^>]*>(.*?)<\\/h1>/i);\n  const titleMatch = content.match(/<title[^>]*>(.*?)<\\/title>/i);\n  if (h1Match && h1Match[1]) {\n    postTitle = h1Match[1].replace(/<[^>]+>/g, '').trim();\n  } else if (titleMatch && titleMatch[1]) {\n    postTitle = titleMatch[1].replace(/<[^>]+>/g, '').trim();\n  }\n}\n\nif (postTitle === 'Article sans titre') {\n  try {\n    const aiTitle = $('New article title').first().json.title;\n    if (aiTitle) postTitle = aiTitle.trim();\n  } catch(e) {}\n}\n\nconst tagsArray = tagsList ? tagsList.split(',').map(tag => tag.trim()) : [];\n\nfor (const item of items) {\n  const data = item.json;\n  if (data.id && (data.source_url || data.link)) {\n    imageId = parseInt(data.id, 10);\n  }\n}\n\nreturn [{\n  json: {\n    title: postTitle,\n    content: content || '<p>Erreur critique : Contenu introuvable</p>',\n    status: 'publish',\n    categories: [categoryId],\n    featured_media: imageId,\n    tags: tagsArray,\n    meta: {\n      schema_jsonld: $('AEO_Formatter').first().json.schema_jsonld || ''\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5696,
+        256
+      ],
+      "id": "c9a03740-2a9b-4fde-9e61-da9acbb53558",
+      "name": "Prepare Post JSON"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.domain }}/wp-json/wp/v2/posts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json[\"title\"] }}"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.content }}"
+            },
+            {
+              "name": "status",
+              "value": "={{ $json.status }}"
+            },
+            {
+              "name": "featured_media",
+              "value": "={{ $json[\"featured_media\"] }}"
+            },
+            {
+              "name": "categories[0]",
+              "value": "={{ $json[\"categories\"][0] }}"
+            },
+            {
+              "name": "liste_tags_ia",
+              "value": "={{ $node[\"Final_Formatter\"].json[\"tags_list\"] }}"
+            },
+            {
+              "name": "slug",
+              "value": "={{ $('New article title').first().json.generated_slug }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        5904,
+        256
+      ],
+      "id": "b49f38bc-c3bb-4ead-89c2-cd5ace082e3e",
+      "name": "Post to WP",
+      "credentials": {
+        "wordpressApi": {
+          "id": "F7cgEKBfeLRtctQv",
+          "name": "Wordpress bot rédacteur articles BDL blog"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1,
+                3,
+                5
+              ],
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -496,
+        208
+      ],
+      "id": "a58853a0-e3ee-4b71-9933-63a70710a7a2",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls.regular }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "imagedownloaded"
+            }
+          }
+        }
+      },
+      "id": "5d66bdaf-553c-4155-967d-2be3c502816e",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        5168,
+        544
+      ],
+      "typeVersion": 4.2,
+      "executeOnce": false,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Basic LLM Chain sort dans .text, Agent sortait dans .output\nconst raw = $input.first().json.text || $input.first().json.output || '';\n\nif (!raw) {\n  return [{\n    json: {\n      article_clean: '',\n      tags_list: '',\n      unsplash_query: 'computer science'\n    }\n  }];\n}\n\n// 1. Extraction de l'article (tout ce qui est avant [TAGS])\nconst article = raw.split('[TAGS]')[0].trim();\n\n// 2. Extraction des tags\nconst tagsMatch = raw.match(/\\[TAGS\\](.*?)\\[\\/TAGS\\]/s);\nconst tags = tagsMatch ? tagsMatch[1].trim() : '';\n\n// 3. Extraction de la requête image\nconst imageMatch = raw.match(/\\[IMAGE_QUERY\\](.*?)(?:\\[\\/IMAGE_QUERY\\]|\\/IMAGE_QUERY\\])/s);\nconst imageQuery = imageMatch ? imageMatch[1].trim() : 'computer science';\n\nreturn [{\n  json: {\n    article_clean: article,\n    tags_list: tags,\n    unsplash_query: imageQuery\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3888,
+        480
+      ],
+      "id": "4b3b4f65-00c6-4809-a8df-1bdce6f7c162",
+      "name": "Final_Formatter"
+    },
+    {
+      "parameters": {
+        "chatId": "1748150661",
+        "text": "=🚀 Article Publié !  \n📝 Titre : {{ $('Post to WP').item.json.title.rendered }} \n📁 Catégorie : {{ $('Picks Less Used').first().json.name }} \n🔗 Lien : {{ $('Post to WP').item.json.link }} \n📅 Date : {{ $now.setLocale('fr').toFormat('dd/MM HH:mm') }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        6848,
+        256
+      ],
+      "id": "4fd7d73a-5e38-4014-a5ff-e6e07a498b21",
+      "name": "Send a text message",
+      "webhookId": "c59ff682-07a8-42c1-a3ce-2950a4362220",
+      "credentials": {
+        "telegramApi": {
+          "id": "**************",
+          "name": "Telegram Blog automation alert"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        6848,
+        448
+      ],
+      "id": "**************",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "chatId": "**************",
+        "text": "=⚠️ ALERTE : Échec du Workflow de publication d'articles de Blog BDL\n\n🛑 Nœud en cause : {{ $json.execution.error.nodeName }}\n❌ Message d'erreur : {{ $json.execution.error.message }}\n🆔 ID Exécution : {{ $json.execution.id }} \n\nIl va falloir aller jeter un œil au dashboard n8n.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        7008,
+        448
+      ],
+      "id": "14e09dc6-d6f6-4309-bcdc-848d3b14726d",
+      "name": "Send a text message1",
+      "webhookId": "3bfdf39b-4bce-4c23-bff0-29767d3d6a9f",
+      "credentials": {
+        "telegramApi": {
+          "id": "**************",
+          "name": "Error tracking bot for all workflows"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        384
+      ],
+      "id": "11977b50-fbb1-4626-aaac-aa095c9c11dd",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://suggestqueries.google.com/complete/search?client=chrome&q={{ $json.search_suggestions }} Afrique&hl=fr&gl=bf",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "client",
+              "value": "firefox"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.search_suggestions }}"
+            },
+            {
+              "name": "h1",
+              "value": "fr"
+            },
+            {
+              "name": "gl",
+              "value": "bf"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1344,
+        400
+      ],
+      "id": "edb6cf1d-d59e-4ba5-aa30-8b335ace4a25",
+      "name": "googleSuggestions"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Basic LLM Chain sort dans .text, Agent sortait dans .output\nconst rawOutput = $input.first().json.text || $input.first().json.output || '';\n\nif (!rawOutput) {\n  return [{\n    json: {\n      title: 'Article sans titre',\n      search_suggestions: 'digitalisation afrique'\n    }\n  }];\n}\n\ntry {\n  const cleanedOutput = rawOutput.replace(/```json|```/g, '').trim();\n  const parsed = JSON.parse(cleanedOutput);\n  return [{ json: parsed }];\n} catch (e) {\n  // Fallback si l'IA n'a pas sorti du JSON valide\n  return [{\n    json: {\n      title: rawOutput.substring(0, 100).trim(),\n      search_suggestions: rawOutput.split(' ').slice(0, 3).join(' ')\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        400
+      ],
+      "id": "c99b1975-380c-4197-a31b-2bffeebb799c",
+      "name": "JSON Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const categories = $items(\"Category Filter\");\nconst usedRows = $items(\"Selecting recent\");\n\nif (!categories || categories.length === 0) {\n  throw new Error(\"No category in Code2\");\n}\n\n// Construire la map des catégories déjà utilisées\nconst usedMap = new Map(\n  (usedRows || []).map(row => {\n    const id = row.json.category_id;\n    const time = new Date(row.json.last_used_at || row.json.used_at).getTime();\n    return [id, time];\n  })\n);\n\nlet selected = null;\nlet minTime = Infinity;\n\nfor (const cat of categories) {\n  const id = cat.json.id;\n  \n  // Si la catégorie n'a JAMAIS été utilisée → priorité absolue, on la prend immédiatement\n  if (!usedMap.has(id)) {\n    return [cat];\n  }\n  \n  // Sinon on cherche celle utilisée le moins récemment\n  const lastUsed = usedMap.get(id);\n  if (lastUsed < minTime) {\n    minTime = lastUsed;\n    selected = cat;\n  }\n}\n\nreturn [selected || categories[0]];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        208
+      ],
+      "id": "34a83469-d2ad-4930-be68-7507c1d0de8f",
+      "name": "Picks Less Used"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupère le brief du Synthétiseur\nconst synthOutput = $input.first().json.output || \n                    $input.first().json.text || '';\n\n// Récupère les vrais résultats Exa directement\nlet exaResults = [];\ntry {\n  exaResults = $('Exa').first().json.results || [];\n} catch(e) {\n  exaResults = [];\n}\n\n// Extrait les URLs propres depuis Exa\nconst blacklist = ['tavily.com', 'google.com', 'facebook.com', \n                   'twitter.com', 'youtube.com', 'wikipedia.org'];\nconst fictifPatterns = ['exemple.com', 'exemple.org', 'example.com'];\n\nlet cleanUrls = [];\n\nif (exaResults.length > 0) {\n  cleanUrls = exaResults\n    .filter(r => r.url && typeof r.url === 'string')\n    .filter(r => !blacklist.some(b => r.url.includes(b)))\n    .filter(r => !fictifPatterns.some(f => r.url.includes(f)))\n    .map(r => r.url)\n    .slice(0, 4);\n}\n\nconst cleanSources = cleanUrls.length > 0\n  ? cleanUrls.map(url => `- ${url}`).join('\\n')\n  : '(Aucune source externe — utilise uniquement les liens internes binkoo.digital)';\n\nreturn [{\n  json: {\n    cleanSources,\n    cleanUrls,\n    sourceCount: cleanUrls.length,\n    synthBrief: synthOutput\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3136,
+        480
+      ],
+      "id": "fd6021cf-5fd5-4102-a7e7-b3204fcbf13b",
+      "name": "Laveur de Liens"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.netlify.com/build_hooks/69c665c3f1cd58dd8b90cf6d",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        6384,
+        256
+      ],
+      "id": "d2f26b2f-5c67-4384-a9ff-40a30fd353b7",
+      "name": "Sitemap automatique"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        224
+      ],
+      "id": "720f53db-42fa-44b1-9bae-1833c91c187d",
+      "name": "Wait",
+      "webhookId": "aa8fedf7-9df1-458d-84c7-f6e204f6a6fd"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3344,
+        480
+      ],
+      "id": "bd25c609-8fb9-440b-8546-f569bc97b28b",
+      "name": "Wait1",
+      "webhookId": "1ad373ed-9a88-4e54-8546-45e124161cef"
+    },
+    {
+      "parameters": {
+        "model": "command-r-08-2024",
+        "options": {
+          "temperature": 0.5,
+          "maxRetries": 3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        2816,
+        656
+      ],
+      "id": "2022b2cf-f5aa-40fb-93c4-53f8df9b5ba5",
+      "name": "Cohere Chat Model",
+      "credentials": {
+        "cohereApi": {
+          "id": "DrDsm2qP8887v1X3",
+          "name": "Cohere account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Tu es un assistant de recherche expert en technologie, business et innovation en Afrique.\n\nSUJET : {{ $('New article title').first().json.title }}\nMOT-CLÉ : {{ $('New article title').first().json.primary_query }}\n\nARTICLES DE RECHERCHE (sources Exa — contenu en français et en anglais) :\n{{ $json.results.map(r => {\n  const highlight = Array.isArray(r.highlights) ? r.highlights.join(' ') : '';\n  const summary = r.summary || '';\n  const content = r.content || '';\n  const best = summary || highlight || content;\n  return `## SOURCE : ${r.title || r.url}\\nURL : ${r.url}\\n\\n${best}`;\n}).join('\\n\\n---\\n\\n') }}\n\n---\n\n⚠️ NE FOURNIS AUCUNE URL dans ta réponse. Les URLs sont gérées séparément.\n\n❌ RÈGLE ABSOLUE : Tu ne t'en tiens qu'aux informations présentes dans ces articles. N'invente aucun fait, aucun chiffre, aucune entreprise, aucun nom. Si une information n'est pas dans les sources, elle n'existe pas pour toi.\n\nINSTRUCTIONS :\n1. Les sources peuvent être en anglais ou en français — traite les deux sans distinction\n2. Extrais uniquement les informations pertinentes pour le sujet traité\n3. Traduis et adapte les exemples en contexte africain et ouest-africain quand c'est possible\n4. Garde les chiffres et statistiques UNIQUEMENT s'ils viennent clairement d'une source\n5. Si les données sont insuffisantes sur un point, écris : \"⚠️ Données insuffisantes — rester général\"\n6. Supprime tout le bruit : navigation, publicités, contenu hors-sujet\n\nFORMAT DE SORTIE :\n\n## NIVEAU DE RICHESSE DES SOURCES\n[RICHE / MOYEN / PAUVRE — une phrase d'explication]\n\n## CONTEXTE ET ENJEUX\n[4-6 phrases en français sur le contexte global, tirées des sources]\n\n## POINTS CLÉS À DÉVELOPPER\n- Point 1 : [fait ou angle concret — ⚠️ Données insuffisantes si rien de disponible]\n- Point 2 :\n- Point 3 :\n- Point 4 (si disponible) :\n- Point 5 (si disponible) :\n\n## EXEMPLES ET CAS CONCRETS\n[Exemples tirés des sources — noms d'entreprises, fondateurs, produits réels]\n\n## DONNÉES ET CHIFFRES VÉRIFIÉS\n[Stats sourcées uniquement — \"Aucune donnée chiffrée disponible\" si vide]\n\nNe rédige pas l'article. Maximum 1000 mots.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2816,
+        480
+      ],
+      "id": "5cbaad60-ab9c-40a6-bf30-7f647024613b",
+      "name": "Agent Synthétiseur1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=⚠️ CONTEXTE TEMPOREL : Aujourd'hui, nous sommes le {{ $now.setLocale('fr').toFormat('dd MMMM yyyy') }}. Rédige cet article en gardant bien à l'esprit que nous sommes à cette date exacte. Ne parle pas au futur pour des choses qui sont déjà d'actualité.\n\n⚠️ CONTEXTE GÉOGRAPHIQUE CIBLE : Afrique de l'Ouest (Focus particulier : Burkina Faso).\n\nRÔLE : Tu es un Stratège SEO et Rédacteur Web Senior expert en transformation digitale en Afrique pour le site web de l'agence BinkoO Digital Lab qui fait dans l'IA, l'automatisation, le développement web et la création graphique. Ton style est celui de Forbes Afrique ou TechCrunch : analytique, visionnaire et pragmatique.\n\nSUJET ET TITRE DE L'ARTICLE :\n{{ $('New article title').first().json.title }}\n\nMOT-CLÉ PRINCIPAL (si vide, déduis-le du titre de l'article en pensant comme un stratège SEO sénior) :\n{{ $('New article title').first().json.primary_query }}\n\nCLUSTER DE MOTS-CLÉS SEO (À intégrer naturellement — si vide, pense comme un expert SEO et mots clés et génère toi-même 10 mots-clés pertinents basés sur le titre et le mot-clé principal) :\n{{ $('New article title').first().json.keywords_cluster }}\n\nBRIEF DE RECHERCHE (synthèse des données — base factuelle de l'article) :\n{{ $('Agent Synthétiseur1').item.json.text }}\n\nSOURCES ET LIENS VALIDÉS (chaque source est présentée avec son URL, son titre et un résumé) :\n{{ $('Laveur de Liens').first().json.cleanSources }}\n\n⚠️ RÈGLE D'UTILISATION DES SOURCES :\n- Utilise EXCLUSIVEMENT ces URLs pour le maillage externe et la section Sources\n- Insère un lien uniquement si le contenu de la source (titre + résumé fourni) est pertinent \n  avec la section précise de l'article où tu l'utilises\n- Ne force pas un lien si le sujet ne correspond pas — mieux vaut ne pas linker que mal linker\n- En section \"Sources et références\" : liste uniquement les URLs que tu as réellement utilisées.\n- Tu ne dois t'en tenir qu'aux données fournies par le bref pour rédiger les exemples de cas concret. N'invente aucun fait pour créer un exemple, sinon ça signifiera un echec critique de la mission. S'il n'y a pas de données exploitables pour faire des exemples, ne fais tout simplement pas d'exemples.\n- Si le brief indique \"NIVEAU DE RICHESSE DES SOURCES : PAUVRE\" ou contient \ndes mentions \"⚠️ Données insuffisantes\", tu dois :\n- Rester volontairement général sur ces points\n- Ne jamais inventer un chiffre, une entreprise, un cas concret ou une étude\n- Remplacer les affirmations précises par des formulations comme \n  \"plusieurs entreprises africaines\", \"des études montrent que\", \n  \"selon les tendances observées\" — UNIQUEMENT si ces éléments \n  sont réellement dans le brief\n- Compenser par une analyse plus approfondie des points \n  où les données sont disponibles\n---\n\n1. MISSION DE LOCALISATION (CRITIQUE) :\nTon objectif est de prendre les données du brief de recherche et de les \"traduire\" pour le marché d'Afrique de l'Ouest.\n- Ne te contente pas de généralités. Parle des enjeux réels : digitalisation des entreprises locales, connectivité, infrastructures locales, besoins spécifiques des entreprises à Ouagadougou, Abidjan, Dakar, etc.\n- Remplace les exemples occidentaux par des exemples ou contextes africains quand c'est pertinent.\n\n2. RÈGLES DE RÉDACTION HTML (STRICT) :\n- Format : Utilise exclusivement des balises html (<title>, <h1>, <h2>, <h3>, <p>, <strong>, <em>, <ul>, <li>...) PAS de Markdown (# ou **).\n- Mets le titre dans une balise <title>.\n- Mets beaucoup d'éléments en italique (<em>), en bold (<strong>) et des listes à puce pour enrichir l'article. C'est non négociable.\n- Longueur : 1000 mots minimum. Développe chaque argument avec un exemple concret tiré du brief. Explique COMMENT les technologies fonctionnent techniquement (ex: API, WhatsApp Business, n8n). Chaque section de l'article doit être bien développée et richement avec des mots clés stratégiques. \n- Intègre obligatoirement les clusters de mots-clés SEO dans l'article.\n- Style : Phrases bien développées et logiques, ton \"Consultant Expert\". Techniquement précis sur l'IA et l'automatisation.\n\n❌ CONTRAINTES ABSOLUES — ÉCHEC CRITIQUE SI NON RESPECTÉ :\n- N'invente AUCUN chiffre ou statistique absent du brief de recherche\n- N'utilise QUE les URLs de \"SOURCES ET LIENS VALIDÉS\" pour le maillage externe et la section Sources\n- N'invente aucun projet réalisé par BinkoO Digital Lab\n- Ne mentionne jamais \"Tavily\" dans l'article\n- Article de moins de 1000 mots = ÉCHEC CRITIQUE\n\n3. STRUCTURE DE L'ARTICLE :\n\n- Introduction : Entre direct dans le vif du sujet. Pas de \"Depuis la nuit des temps...\".\n- Corps : Divise en sections logiques avec <h2> et <h3>.\n\n- Maillage interne (2 fois maximum dans l'article) :\n  - https://binkoo.digital/services → quand on parle d'offre globale\n  - https://binkoo.digital/contact → pour les prises de rendez-vous\n\n- Maillage externe : Utilise uniquement les URLs de \"SOURCES ET LIENS VALIDÉS\".\n\n- Section Sources : Crée une section <h4>Sources et références</h4> à la fin avec UNIQUEMENT les URLs validées.\n\n- Section obligatoire : <em>Décryptage Stratégique</em> : L'avis des experts BinkoO Digital Lab — analyse critique de l'implémentation de cette technologie dans le contexte ouest-africain, conseil de haut niveau.\n\n4. CONTEXTE DE L'AGENCE & CTA :\nIdentité : BinkoO Digital Lab est une agence moderne située au Burkina Faso, à Bobo-Dioulasso.\nServices : Automatisation de processus métier. Intégration de l'ia dans les entreprises (Systèmes IA et Agents IA sur mesure). Développement Web (applications, SaaS, site vitrine, e-commerce). Création graphique (logo, flyer, affiches).\n\nConclus en montrant comment BinkoO Digital Lab accompagne les entreprises locales. Transition fluide entre le sujet traité et les services. Invitation discrète à prendre contact :\nWhatsApp : <a href=\"https://wa.me/22644323841\">+226 44323841</a>\nEmail : <a href=\"mailto:contact@binkoo.digital\">contact@binkoo.digital</a>\n\n5. SORTIE FINALE (APRÈS L'ARTICLE) :\n[TAGS] tag1, tag2, tag3, tag4, tag5 [/TAGS], les tags doivent être seulement en français.\n[IMAGE_QUERY] Tu dois donner une requête anglaise généraliste sur la tech (office, smartphone, robot...) et descriptive pour que Unsplash nous donne cette image, en 2 ou 3 mots maximum /IMAGE_QUERY]",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        3552,
+        480
+      ],
+      "id": "23a3b855-00bd-4186-9f5c-5d0658ec8caf",
+      "name": "Rédacteur1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=⚠️ CONTEXTE TEMPOREL IMPORTANT : Aujourd'hui, nous sommes le {{ $now.setLocale('fr').toFormat('dd MMMM yyyy') }}. Génère  le titre  en gardant bien à l'esprit que nous sommes à cette date exacte. Ne parle pas au futur pour des choses qui sont déjà d'actualité.\n\nCONSIGNE GÉOGRAPHIQUE OBLIGATOIRE :\nTon titre DOIT inclure une référence géographique choisie ALÉATOIREMENT dans cette liste — prends-en une différente à chaque fois : Burkina Faso / Côte d'Ivoire / Sénégal / Mali / Bénin / Togo / Afrique de l'Ouest / Afrique francophone. Ne répète pas le même pays deux fois de suite.\n\nLe sujet doit être traité sous l'angle des réalités locales (digitalisation, entreprises locales, infrastructures). L'objectif est de cibler le marché local.Ne génère pas de titre généraliste ou européen.\n\nRôle : Tu es un Copywriter de classe mondiale spécialisé dans les titres viraux le SEO, et en Psychologie du Clic.\n\nMissions : Génère un titre \"Hook\" (accrocheur) pour un article basé sur la catégorie : {{ $('Picks Less Used').item.json.name }}.\nEt voici la description complète de la catégorie : {{ $('Picks Less Used').item.json.description }}\n\nLe titre doit être 100% basé sur cette catégorie et ne doit pas contenir des termes qui n'ont aucun lien avec la catégorie sélectionnée. \nPar exemple ne parle pas \"d'automatisation en entreprise\" quand on est dans une catégorie \"Produits digitaux\" ou \"SEO\".\n\nEnsuite, génère un \"Mot-clé Graine\" de 3 mots maximum.\n\nRègle de précision : Ne donne pas juste le sujet. Ajoute un qualificatif professionnel ou technique (ex: \"n8n\", \"automatisation entreprise\",\"produits digitaux\" \"IA workflow\", \"no-code B2B\").\nExemple : Au lieu de \"outils automatisation\", génère \"outils automatisation n8n\" ou \"automatisation processus entreprise\".\n\n⚠️ CONTRAINTE ABSOLUE - TITRES DÉJÀ UTILISÉS :\nVoici les titres des derniers articles que nous avons déjà publiés dans cette catégorie :\n{{ $('10 latest headlines').all().map(item => \"- \" + item.json.title).join('\\n') }}\n\nTu as l'INTERDICTION STRICTE de générer un titre identique ou d'utiliser exactement le même angle que ceux listés ci-dessus. Trouve un angle totalement nouveau.\n\nRègles d'or :\n1. Utilise la technique du \"Curiosity Gap\" (donne envie de savoir la suite).\n(Garde le reste de tes règles d'or intactes...)\nCONTRAINTES DE TITRE (ANTI-IA) :\n\n\nSTYLE : Produis un titre sobre, direct et orienté SEO et bénéfice métier ou résolution d'un problème technique concret. Pas de ponctuation excessive, pas de majuscule à chaque mot.\n\nSTRUCTURE : Évite la structure \"Titre : Sous-titre\". Fais une seule phrase percutante. ⚠️ CET ORDRE EST NON NEGOCIABLE ET UN TITRE GENERE AVEC LE FORMAT \"TITRE : SOUS-TITRE\" SIGNIFIE L'ECHEC CRITIQUE DE LA MISSION.\n\n4. Garde le mot-clé principal de la catégorie dans le titre.\n\n5. Longueur : Entre 40 et 70 caractères.\n\n6. Sortie : Renvoie UNIQUEMENT le texte du titre, sans guillemets.\n\nFORMAT DE SORTIE OBLIGATOIRE (JSON UNIQUEMENT) :\nTu dois répondre exclusivement avec cet objet JSON, sans aucun texte avant ou après :\n\nJSON\n{\n  \"title\": \"Ton titre humain et professionnel ici\",\n  \"search_suggestions\": \"mot-clé court ici\"\n}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        880,
+        400
+      ],
+      "id": "333f7d5a-9d92-4bbe-ace9-6595b02d9a3c",
+      "name": "AI Agent1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.domain }}/wp-json/wp/v2/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Disposition",
+              "value": "=attachment; filename={{ $('New article title').first().json.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() }}.jpg"
+            },
+            {
+              "name": "Content-Type",
+              "value": "image/jpeg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "imagedownloaded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        5360,
+        544
+      ],
+      "id": "fb6e831b-9e99-4beb-b1cb-bd5eabacf775",
+      "name": "Media Upload to WP",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "credentials": {
+        "wordpressApi": {
+          "id": "**************",
+          "name": "Wordpress bot rédacteur articles BDL blog"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        5472,
+        256
+      ],
+      "id": "21e90dd3-8496-4428-b491-**************",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "amount": 6,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        6144,
+        256
+      ],
+      "id": "a734c462-8ea6-4010-baa5-afdfbede96d1",
+      "name": "Wait2",
+      "webhookId": "a7565c87-34d7-4f17-9dc4-**************"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://indexing.googleapis.com/v3/urlNotifications:publish",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"https://binkoo.digital/blog/{{ $('Post to WP').item.json.slug }}\",\n  \"type\": \"URL_UPDATED\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        6608,
+        256
+      ],
+      "id": "f3504330-a21d-4fda-a16d-**************",
+      "name": "Indexation automatique",
+      "credentials": {
+        "googleApi": {
+          "id": "**************",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "perItem"
+      },
+      "type": "n8n-nodes-base.timeSaved",
+      "typeVersion": 1,
+      "position": [
+        7296,
+        336
+      ],
+      "id": "4c4c7ef7-0dfd-4bc8-b87e-**************",
+      "name": "Time Saved"
+    },
+    {
+      "parameters": {
+        "query": "={{ $('New article title').first().json.primary_query }} {{ $('New article title').first().json.keywords_cluster }}",
+        "additionalFields": {},
+        "contentsOptions": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-exa-official.exa",
+      "typeVersion": 1,
+      "position": [
+        2544,
+        480
+      ],
+      "id": "07a02b4b-5287-4b12-aae6-**************",
+      "name": "Exa",
+      "credentials": {
+        "exaApi": {
+          "id": "**************",
+          "name": "Exa account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=🚨 INSTRUCTION SYSTÈME : Tu es dans un pipeline d'automatisation n8n. Tu ne poses JAMAIS de questions. Tu exécutes immédiatement. Ton output doit commencer directement par [FAQ]. Aucun texte avant.\n\nTu reçois un article HTML déjà rédigé. Ta mission est d'y ajouter trois éléments AEO (Answer Engine Optimization) pour maximiser les chances que les LLMs (ChatGPT, Claude, Perplexity, Gemini) citent cet article comme source de référence.\n\nARTICLE HTML :\n{{ $('Final_Formatter').first().json.article_clean }}\n\nSUJET : {{ $('New article title').first().json.title }}\nMOT-CLÉ PRINCIPAL : {{ $('New article title').first().json.primary_query }}\n\nSOURCES VALIDÉES : {{ $('Laveur de Liens').first().json.cleanSources }}\n\n---\n\nTA MISSION : Génère exactement ces 3 éléments dans cet ordre strict.\n\nÉLÉMENT 1 — SECTION FAQ HTML\nUne section FAQ avec 4 questions-réponses sur le sujet traité.\nRègles :\n- Les questions doivent correspondre exactement à ce que quelqu'un poserait à un assistant IA\n- Chaque réponse doit être auto-suffisante en 2-3 phrases maximum — compréhensible sans avoir lu l'article\n- Contexte africain et ouest-africain obligatoire dans au moins 2 réponses\n- Format HTML strict : <h2>Questions fréquentes</h2> suivi de <h3>question ?</h3><p>réponse</p>\n- Pas de Markdown\n\nÉLÉMENT 2 — PHRASE D'INTRODUCTION AEO\nUne seule phrase de 25 mots maximum qui répond directement à la question implicite du titre, comme si tu répondais à un assistant IA. Cette phrase sera insérée comme premier paragraphe de l'article.\nFormat : [INTRO_AEO] ta phrase ici [/INTRO_AEO]\n\nÉLÉMENT 3 — SCHEMA JSON-LD\nUn bloc Schema.org complet pour cet article.\nFormat strict :\n[SCHEMA]\n{\n  \"@context\": \"https://schema.org\",\n  \"@type\": \"Article\",\n  \"headline\": \"TITRE EXACT DE L'ARTICLE\",\n  \"description\": \"RÉSUMÉ EN UNE PHRASE TIRÉE DU CONTENU\",\n  \"author\": {\n    \"@type\": \"Organization\",\n    \"name\": \"BinkoO Digital Lab\",\n    \"url\": \"https://binkoo.digital\"\n  },\n  \"publisher\": {\n    \"@type\": \"Organization\",\n    \"name\": \"BinkoO Digital Lab\",\n    \"url\": \"https://binkoo.digital\",\n    \"logo\": {\n      \"@type\": \"ImageObject\",\n      \"url\": \"https://binkoo.digital/logo.png\"\n    }\n  },\n  \"mainEntityOfPage\": {\n    \"@type\": \"WebPage\",\n    \"@id\": \"{{ $('New article title').first().json.slug ? 'https://binkoo.digital/blog/' + $('New article title').first().json.slug : 'https://binkoo.digital/blog/' }}\"\n  }\n}\n[/SCHEMA]\n\nOUTPUT FINAL ATTENDU :\n[FAQ]\n... HTML de la FAQ ...\n[/FAQ]\n[INTRO_AEO] ... [/INTRO_AEO]\n[SCHEMA]\n... JSON-LD ...\n[/SCHEMA]",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        4320,
+        480
+      ],
+      "id": "3be58f9d-1ca8-4202-bc7b-**************",
+      "name": "Agent AEO",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.text || $input.first().json.output || '';\n\nif (!raw) {\n  return [{\n    json: {\n      article_final: $('Final_Formatter').first().json.article_clean,\n      schema_jsonld: '',\n      aeo_enriched: false\n    }\n  }];\n}\n\n// Extraction FAQ\nconst faqMatch = raw.match(/\\[FAQ\\]([\\s\\S]*?)\\[\\/FAQ\\]/i);\nconst faqHtml = faqMatch ? faqMatch[1].trim() : '';\n\n// Extraction intro AEO\nconst introMatch = raw.match(/\\[INTRO_AEO\\]([\\s\\S]*?)\\[\\/INTRO_AEO\\]/i);\nconst introAeo = introMatch ? introMatch[1].trim() : '';\n\n// Extraction Schema JSON-LD\nconst schemaMatch = raw.match(/\\[SCHEMA\\]([\\s\\S]*?)\\[\\/SCHEMA\\]/i);\nconst schemaRaw = schemaMatch ? schemaMatch[1].trim() : '';\n\n// Récupère l'article original\nlet article = $('Final_Formatter').first().json.article_clean || '';\n\n// Insère l'intro AEO comme premier <p> après le <h1> si présent\nif (introAeo) {\n  const introP = `<p><strong>${introAeo}</strong></p>`;\n  if (article.includes('<h1')) {\n    article = article.replace(/(<h1[^>]*>.*?<\\/h1>)/is, `$1\\n${introP}`);\n  } else {\n    article = introP + '\\n' + article;\n  }\n}\n\n// Insère la FAQ avant la section Sources et références\nif (faqHtml) {\n  const faqSection = `\\n<section class=\"faq-section\">\\n${faqHtml}\\n</section>\\n`;\n  if (article.includes('<h4>Sources')) {\n    article = article.replace('<h4>Sources', faqSection + '<h4>Sources');\n  } else {\n    article = article + faqSection;\n  }\n}\n\n// Formate le Schema JSON-LD pour injection dans WordPress\nconst schemaJsonld = schemaRaw \n  ? `<script type=\"application/ld+json\">\\n${schemaRaw}\\n</script>`\n  : '';\n\nconst articleFinal = article;\n\nreturn [{\n  json: {\n    article_final: articleFinal,\n    schema_jsonld: schemaJsonld,\n    faq_html: faqHtml,\n    intro_aeo: introAeo,\n    aeo_enriched: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4688,
+        480
+      ],
+      "id": "8f209f71-1ff2-4c49-befa-**************",
+      "name": "AEO_Formatter"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4096,
+        480
+      ],
+      "id": "809464ac-ca24-4f2e-bb8e-**************",
+      "name": "Wait3",
+      "webhookId": "9aa15ef3-b2f0-446e-a862-**************"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        3552,
+        672
+      ],
+      "id": "b13c903e-985b-4297-a023-**************",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Ivz32Ww3ksEXDwxo",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        4320,
+        640
+      ],
+      "id": "7515b02b-75e4-4777-98ed-**************",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "**************",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        576
+      ],
+      "id": "d13bcb95-6d42-407e-a544-**************",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "**************",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Load Categories": {
+      "main": [
+        [
+          {
+            "node": "Category Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Load Categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category Filter": {
+      "main": [
+        [
+          {
+            "node": "Selecting recent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Selecting recent": {
+      "main": [
+        [
+          {
+            "node": "Picks Less Used",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10 latest headlines": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New article title": {
+      "main": [
+        [
+          {
+            "node": "Merge heading",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge heading": {
+      "main": [
+        [
+          {
+            "node": "Combines full post meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combines full post meta": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Updating posts DB": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Exa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unsplash Search": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Post JSON": {
+      "main": [
+        [
+          {
+            "node": "Post to WP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to WP": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Media Upload to WP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final_Formatter": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Time Saved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message1": {
+      "main": [
+        [
+          {
+            "node": "Time Saved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        []
+      ]
+    },
+    "googleSuggestions": {
+      "main": [
+        [
+          {
+            "node": "New article title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Parser": {
+      "main": [
+        [
+          {
+            "node": "googleSuggestions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Picks Less Used": {
+      "main": [
+        [
+          {
+            "node": "Merge heading",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "10 latest headlines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Laveur de Liens": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sitemap automatique": {
+      "main": [
+        [
+          {
+            "node": "Indexation automatique",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Updating posts DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Rédacteur1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent Synthétiseur1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent Synthétiseur1": {
+      "main": [
+        [
+          {
+            "node": "Laveur de Liens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rédacteur1": {
+      "main": [
+        [
+          {
+            "node": "Final_Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "JSON Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Media Upload to WP": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Prepare Post JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Sitemap automatique",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Indexation automatique": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exa": {
+      "main": [
+        [
+          {
+            "node": "Agent Synthétiseur1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent AEO": {
+      "main": [
+        [
+          {
+            "node": "AEO_Formatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AEO_Formatter": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Unsplash Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Agent AEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Rédacteur1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agent AEO",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Schedule Trigger": [
+      {
+        "timestamp": "2026-06-01T07:00:57.011+00:00",
+        "Readable date": "June 1st 2026, 7:00:57 am",
+        "Readable time": "7:00:57 am",
+        "Day of week": "Monday",
+        "Year": "2026",
+        "Month": "June",
+        "Day of month": "01",
+        "Hour": "07",
+        "Minute": "00",
+        "Second": "57",
+        "Timezone": "Africa/Abidjan (UTC+00:00)"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "******************************************************"
+  }
+}

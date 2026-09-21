@@ -7,7 +7,7 @@ This section documents practical digital marketing work carried out across proje
 - Social media account management
 - Community management
 - Content creation
-- AI-assisted visual creation
+- Generative AI and AI-assisted visual creation
 - Social media publishing
 - Meta Ads
 - TikTok Ads

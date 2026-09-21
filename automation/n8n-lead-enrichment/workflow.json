@@ -1,3 +1,1351 @@
 {
-  "PLACEHOLDER": "Replace with the sanitized public version of the n8n workflow JSON."
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1712,
+        128
+      ],
+      "id": "fd10ad7e-513c-4de7-adcc-***************************",
+      "name": "Telegram Trigger",
+      "webhookId": "3190667b-bbcd-4c00-9110-***************************",
+      "credentials": {
+        "telegramApi": {
+          "id": "***************************",
+          "name": "Telegram bot workflow Google Maps scraping BDL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.message.text;\n// Format attendu : \"Secteur d'activité ; Ville ; Nombre\"\n// Exemple : \"Immobilier ; Bobo-Dioulasso ; 30\"\nconst parts = msg.split(';').map(p => p.trim());\n\nreturn {\n  query: parts[0] || \"Entreprises\",\n  location: parts[1] || \"Burkina Faso\",\n  limit: parseInt(parts[2]) || 20\n};"
+      },
+      "id": "c68f01e3-897c-4597-9c10-***************************",
+      "name": "Parse Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1488,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorSource": "store",
+        "actorId": {
+          "__rl": true,
+          "value": "***************************",
+          "mode": "list",
+          "cachedResultName": "Google Maps Scraper (compass/crawler-google-places)",
+          "cachedResultUrl": "https://console.apify.com/actors/nwua9Gu5YrADL7ZDj/input"
+        },
+        "customBody": "={\n  \"searchStringsArray\": [\"{{ $json.query }}\"],\n  \"locationQuery\": \"{{ $json.location }}\",\n  \"maxCrawledPlacesPerSearch\": {{ $json.limit }},\n  \"language\": \"fr\",\n  \"scrapePlaceDetailPage\": false,\n  \"scrapeContacts\": false,\n  \"maxReviews\": 0,\n  \"maxImages\": 0,\n  \"maximumLeadsEnrichmentRecords\": 0\n}"
+      },
+      "id": "feb15843-5a1b-477a-bbed-***************************",
+      "name": "Apify Google Maps",
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [
+        -1296,
+        128
+      ],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "let newItems = [];\nlet items = $input.all();\n\nfor (let i = 0; i < items.length; i++) {\n  let leadData = items[i].json;\n  \n  // On regroupe les deux sources séparées par une virgule pour ne pas coller deux numéros différents\n  let phoneSources = [leadData.phone, leadData.extracted_phones].filter(Boolean).join(',');\n  \n  // On découpe la chaîne s'il y a plusieurs numéros (séparés par virgule, point-virgule, ou slash)\n  let rawArray = phoneSources.split(/[,;/]+/);\n  let validNumbers = [];\n\n  for (let chunk of rawArray) {\n    // CRUCIAL : On supprime TOUT sauf les chiffres et le \"+\" (aucun espace conservé)\n    let digitsOnly = chunk.replace(/[^\\d+]/g, '');\n    \n    // Si la longueur est logique (entre 8 et 15), on le garde\n    if (digitsOnly.length >= 8 && digitsOnly.length <= 15) {\n      validNumbers.push(digitsOnly);\n    }\n  }\n\n  let uniqueMatches = [...new Set(validNumbers)];\n\n  if (uniqueMatches.length > 0) {\n    for (let num of uniqueMatches) {\n        let newItemData = JSON.parse(JSON.stringify(leadData));\n        newItemData.raw_number = num; \n        newItems.push({ json: newItemData });\n    }\n  } else {\n    let newItemData = JSON.parse(JSON.stringify(leadData));\n    newItemData.raw_number = null;\n    newItems.push({ json: newItemData });\n  }\n}\n\nreturn newItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        128
+      ],
+      "id": "b0dbd2f9-a815-49d7-8488-***************************",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://crawl4ai:11235/crawl",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"urls\": [\"{{ $('Apify Google Maps').item.json.website }}\"],\n  \"magic_mode\": true,\n  \"simulate_user\": true,\n  \"override_navigator\": true,\n  \"remove_overlay_elements\": true,\n  \"wait_until\": \"networkidle2\",\n  \"page_timeout\": 60000,\n  \"verify_ssl\": false,\n  \"extraction_strategy\": \"NoExtractionStrategy\",\n  \"markdown_generator\": {\n    \"options\": {\n      \"ignore_links\": false,\n      \"ignore_images\": true\n    }\n  },\n  \"user_agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36\"\n}",
+        "options": {
+          "allowUnauthorizedCerts": false,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "proxy": ""
+        }
+      },
+      "id": "e9dfb55c-943b-490c-9ec6-***************************",
+      "name": "Crawl4AI (Scraping Site)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -464,
+        400
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -656,
+        224
+      ],
+      "id": "bae7fd44-4298-4a56-882c-***************************",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        432
+      ],
+      "id": "9cbc903a-9219-4709-a802-***************************",
+      "name": "Wait",
+      "webhookId": "09f73872-b587-4a95-8eaf-***************************"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Tu es un expert en analyse d'entreprise et extraction de données. Analyse le contenu suivant pour extraire uniquement des faits.\n\nCONTENU DU SITE :\n{{ $json.texte_ia }}\n\nTA MISSION :\nRédige un texte structuré (sans titres, uniquement des paragraphes) qui décrit :\n\nToutes les activités de l'entreprise.\n\nSon histoire ou son expérience (si mentionnée).\n\nSes valeurs et ce qui la différencie de ses concurrents.\n\nINTERDICTIONS :\n\nNE FAIS PAS d'accroche commerciale.\n\nNE DIS PAS \"Bonjour\".\n\nNE GÉNÈRE PAS de JSON, fournis uniquement le texte brut.\n\nSi aucune info n'est disponible, écris \"Description indisponible\".",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2160,
+        432
+      ],
+      "id": "bad4a60c-3119-4115-80f4-***************************",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        608
+      ],
+      "id": "36b4fd16-7c8f-4011-b5be-***************************",
+      "name": "Cohere Chat Model1",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $json;\nlet iaData = { valeurs: \"\", failles: \"\", accroche: \"\", services_detectes: \"\" };\n\ntry {\n    // On nettoie les symboles markdown que l'IA pourrait ajouter\n    let rawText = lead.text.replace(/```json/g, '').replace(/```/g, '').trim();\n    iaData = JSON.parse(rawText);\n} catch (e) {\n    // Si l'IA a complètement halluciné, on évite le crash\n    iaData.accroche = \"Accroche indisponible\";\n}\n\n// On fusionne les nouvelles données avec le lead existant\nreturn { ...lead, ...iaData };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        432
+      ],
+      "id": "3b85b865-0bb0-46aa-99e6-***************************",
+      "name": "Extraction JSON IA"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\nlet md = \"\";\n\n// 1. Récupération robuste du Markdown\nif (data.results && Array.isArray(data.results) && data.results[0]) {\n    md = data.results[0].markdown?.raw_markdown || data.results[0].markdown || \"\";\n} else {\n    md = data.markdown?.raw_markdown || data.markdown || \"\";\n}\n\n// Sécurité au cas où Crawl4AI renvoie le texte ailleurs\nif (!md && data.text) md = data.text;\n\n// --- 2. EXTRACTION EMAILS ---\nconst emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;\nlet emails = md.match(emailRegex) || [];\nemails = [...new Set(emails.map(e => e.toLowerCase()))]\n    .filter(e => !e.match(/\\.(png|jpg|jpeg|svg|gif|webp|pdf|js|css)$/));\n\n// --- 3. EXTRACTION TÉLÉPHONES (Optimisé pour les numéros locaux et internationaux) ---\n// Capture les formats +226, 00226, et les suites de 8 chiffres standards\nconst phoneRegex = /(?:\\+|00)?(?:226)?[\\s.-]?\\d{2}[\\s.-]?\\d{2}[\\s.-]?\\d{2}[\\s.-]?\\d{2}/g;\nlet phones = md.match(phoneRegex) || [];\nphones = [...new Set(phones.map(p => p.trim()))]\n    .filter(p => {\n        const digits = p.replace(/[^0-9]/g, \"\");\n        return digits.length >= 8 && digits.length <= 15;\n    });\n\n// --- 4. RÉSEAUX SOCIAUX ---\nconst socialDomains = ['facebook.com', 'instagram.com', 'tiktok.com', 'linkedin.com', 'twitter.com', 'x.com', 'youtube.com', 'wa.me'];\nconst noise = ['/sharer', '/intent', '/share', '/p/', '/reels/', '/posts/', '/status/', '/video/', 'scripts', 'plugins', 'group'];\n\nlet links = md.match(/https?:\\/\\/[^\\s)\"]+/g) || [];\nlet socialProfiles = links.filter(link => {\n    const urlLower = link.toLowerCase();\n    const isSocial = socialDomains.some(domain => urlLower.includes(domain));\n    const isNotNoise = !noise.some(bad => urlLower.includes(bad));\n    \n    // Nettoyage de l'URL pour la vérification\n    let cleanLink = link.replace(/^https?:\\/\\/(www\\.)?/, '').split('?')[0];\n    let urlParts = cleanLink.split('/');\n    \n    // On s'assure d'avoir un nom d'utilisateur (ex: facebook.com/binkoo)\n    return isSocial && isNotNoise && urlParts.length > 1 && urlParts[1].length > 1;\n});\n\n// --- 5. ENVOI DES DONNÉES SÉPARÉES ---\nreturn {\n    texte_brut: md, // Le texte intégral est enfin isolé ici !\n    extracted_emails: emails.join(\", \") || \"Non trouvé\",\n    extracted_phones: phones.join(\", \") || \"Non trouvé\",\n    extracted_socials: [...new Set(socialProfiles)].join(\", \") || \"Non trouvé\",\n    ...data // On conserve le reste des données Google Maps\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        400
+      ],
+      "id": "e3f11334-84e3-4dad-b2af-***************************",
+      "name": "Extracteur de Données Hard"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\n\n// On récupère directement le texte isolé par le node précédent !\nlet md = data.texte_brut || \"\";\n\nif (!md) return { texte_ia: \"VIDE\", liens_menu: \"VIDE\", site_url: data.url || \"\" };\n\n// ... (Tout le reste de ton code avec la fonction supprimerBalises, etc., reste intact) ...\n\n// --- 2. FONCTION DE NETTOYAGE ROBUSTE (Sans Regex, sans Map) ---\nfunction supprimerBalises(texte, debut, fin) {\n    let segments = texte.split(debut);\n    let resultat = segments[0];\n    for (let i = 1; i < segments.length; i++) {\n        let positionFin = segments[i].indexOf(fin);\n        if (positionFin !== -1) {\n            resultat += segments[i].substring(positionFin + fin.length);\n        } else {\n            resultat += segments[i];\n        }\n    }\n    return resultat;\n}\n\n// --- 3. EXTRACTION DES LIENS DU MENU ---\nconst liensExtraits = [];\nconst motsInterdits = ['login', 'register', 'cart', 'panier', 'checkout', 'wp-content', 'tag', 'category', 'search', 'recherche', 'property', 'status', 'label'];\n\nlet blocsLiens = md.split('](');\nfor (let i = 0; i < blocsLiens.length - 1; i++) {\n    let partieTexte = blocsLiens[i];\n    let partieUrl = blocsLiens[i+1];\n    \n    let debutTexte = partieTexte.lastIndexOf('[');\n    let finUrl = partieUrl.indexOf(')');\n    \n    if (debutTexte !== -1 && finUrl !== -1) {\n        let texteLien = partieTexte.substring(debutTexte + 1).trim();\n        let urlLien = partieUrl.substring(0, finUrl).trim();\n        \n        let urlBasse = urlLien.toLowerCase();\n        let estInutile = false;\n        for (let mot of motsInterdits) {\n            if (urlBasse.includes(mot)) { estInutile = true; break; }\n        }\n        \n        if (!estInutile && texteLien.length < 50 && urlLien.startsWith('http')) {\n            liensExtraits.push(texteLien + ' : ' + urlLien);\n        }\n    }\n}\n\n// --- 4. NETTOYAGE DU CONTENU ---\nlet textePropre = md;\n\n// Supprimer les images Base64 (très lourd)\ntextePropre = supprimerBalises(textePropre, 'data:image', ')');\n\n// Supprimer les sources \ntextePropre = supprimerBalises(textePropre, '');\n\n// Supprimer les chevrons de Crawl4AI ⟨X⟩\ntextePropre = supprimerBalises(textePropre, '⟨', '⟩');\n\n// Supprimer les balises images Markdown ![alt]\ntextePropre = supprimerBalises(textePropre, '![', ']');\n\n// --- 5. FILTRAGE LIGNE PAR LIGNE ---\nconst lignes = textePropre.split('\\n');\nconst lignesFinales = [];\n\nfor (let ligne of lignes) {\n    let l = ligne.trim();\n    \n    // On enlève les résidus de liens Markdown [Texte](URL) pour ne garder que le Texte\n    while (l.includes('](')) {\n        let debut = l.indexOf('[');\n        let milieu = l.indexOf('](', debut);\n        let fin = l.indexOf(')', milieu);\n        if (debut !== -1 && milieu !== -1 && fin !== -1) {\n            l = l.substring(0, debut) + l.substring(debut + 1, milieu) + l.substring(fin + 1);\n        } else { break; }\n    }\n\n    // Filtrage qualité\n    if (l.length < 60) continue;\n\n    let mots = l.split(' ').filter(m => m.length > 0);\n    let aPonctuation = l.includes('.') || l.includes('!') || l.includes('?');\n    let texteBas = l.toLowerCase();\n    \n    // Éjecter les listes sans ponctuation (ex: listes de quartiers ou services)\n    if (mots.length > 12 && !aPonctuation) continue;\n    \n    // Éjecter les lignes de prix ou budgets isolées\n    if ((texteBas.includes('f cfa') || texteBas.includes('budget')) && !aPonctuation) continue;\n    \n    // Éjecter les caractéristiques techniques courtes\n    if ((texteBas.startsWith('lits:') || texteBas.startsWith('baignoires:') || texteBas.startsWith('parcelle')) && mots.length < 10) continue;\n\n    lignesFinales.push(l);\n}\n\n// --- 6. RÉASSEMBLAGE ET FORMATAGE ---\nlet resultatFinal = lignesFinales.join('\\n\\n');\n\n// Nettoyage des symboles Markdown restants\nresultatFinal = resultatFinal.split('#').join('').split('*').join('').split('`').join('');\n\n// Suppression des doubles espaces\nwhile (resultatFinal.includes('  ')) {\n    resultatFinal = resultatFinal.split('  ').join(' ');\n}\n\n// Déduplication des liens\nconst liensUniques = [...new Set(liensExtraits)];\n\nreturn {\n    texte_ia: resultatFinal.substring(0, 3800).trim() || \"Aucune description pertinente extraite.\",\n    liens_menu: liensUniques.slice(0, 15).join('\\n') || \"Menu non trouvé.\",\n    site_url: data.results?.[0]?.url || data.url || \"\"\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        400
+      ],
+      "id": "0f085d7f-3388-4565-b39f-***************************",
+      "name": "Préparateur de Texte IA"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Voici les liens d'un menu de site web : {{ $json.liens_menu }}\n\nDonne-moi uniquement l'URL brute de la page qui semble présenter l'entreprise (About, Qui sommes-nous, ou Services). Ne réponds que par l'URL.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        848,
+        160
+      ],
+      "id": "84ba00d9-a31b-4b9f-9445-***************************",
+      "name": "Le Devineur"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://crawl4ai:11235/crawl",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    \"urls\": [ $json.text.trim() ],\n    \"magic_mode\": true,\n    \"simulate_user\": true,\n    \"override_navigator\": true,\n    \"remove_overlay_elements\": true,\n    \"wait_until\": \"networkidle2\",\n    \"page_timeout\": 60000,\n    \"verify_ssl\": false,\n    \"extraction_strategy\": \"NoExtractionStrategy\",\n    \"markdown_generator\": {\n      \"options\": {\n        \"ignore_links\": false,\n        \"ignore_images\": true\n      }\n    },\n    \"user_agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36\"\n  }\n}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "proxy": ""
+        }
+      },
+      "id": "dd63f11d-7dd9-4353-bc9d-***************************",
+      "name": "Crawl4AI (Scraping Site)1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        160
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "alwaysOutputData": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.5
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        848,
+        352
+      ],
+      "id": "de8a20b2-2b1a-482d-bcea-***************************",
+      "name": "Cohere Chat Model",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "const liens = $json.liens_menu.split('\\n');\n\n// On cherche la ligne qui contient les mots clés prioritaires\nconst cible = liens.find(l => \n    l.toLowerCase().includes('qui sommes-nous') || \n    l.toLowerCase().includes('a propos') || \n    l.toLowerCase().includes('agence')\n);\n\n// Si on trouve, on extrait l'URL après le \":\"\n// Sinon on prend l'URL de base pour ne pas tout casser\nconst finalUrl = cible ? cible.split(' : ')[1].trim() : $json.site_url;\n\nreturn {\n    ...$json, // CRUCIAL : On conserve toutes les données (Google Maps, emails, etc.)\n    url_rebond: finalUrl,\n    is_retry: true // CRUCIAL : C'est ce qui indique au Cerveau qu'on a DÉJÀ fait le rebond\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        160
+      ],
+      "id": "e3f662d3-a39a-415d-8b4a-***************************",
+      "name": "Extracteur d'URL de Rebond"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "04d6719b-5d5f-4f50-ac35-***************************",
+              "leftValue": "={{ $json.needs_rebond }}",
+              "rightValue": "(terrain|parcelle|duplex|villa|vente|location|f cfa|chambres)",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        384,
+        400
+      ],
+      "id": "41439303-4ffb-411b-b6b9-***************************",
+      "name": "Sélecteur de Qualité"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\nconst texte = (data.texte_ia || \"\").toLowerCase();\nconst menu = (data.liens_menu || \"\").toLowerCase();\n\n// 1. VÉRIFICATION DE LA SÉCURITÉ (A-t-on déjà rebondi ?)\n// On s'assure de gérer le cas où is_retry est un booléen ou un texte\nconst isRetry = data.is_retry === true || data.is_retry === \"true\";\n\n// 2. ANALYSE DU TEXTE (Est-ce du bruit immobilier/catalogue ?)\nconst contientBruit = /(terrain|parcelle|duplex|villa|vente|location|f cfa|chambres|budget)/.test(texte);\nconst manqueIdentite = !texte.includes('notre équipe') && !texte.includes('fondée') && !texte.includes('expérience') && !texte.includes('notre mission');\nconst texteMauvais = contientBruit || manqueIdentite; // C'est ici qu'on fait le fameux \"OR\"\n\n// 3. ANALYSE DU MENU (A-t-on une page \"Qui sommes-nous\" ?)\nconst aUneBonneUrl = /(qui-sommes-nous|a-propos|notre-agence|presentation|about-us|carriere)/.test(menu);\n\n// 4. DÉCISION FINALE (Le grand \"AND\")\n// On rebondit SI : on n'a pas encore rebondi ET le texte est mauvais ET on a une bonne cible\nconst needsRebond = !isRetry && texteMauvais && aUneBonneUrl;\n\n// 5. EXTRACTION DE L'URL DE REBOND (Si nécessaire)\nlet urlRebond = data.site_url;\nif (needsRebond) {\n    const liens = data.liens_menu.split('\\n');\n    const cible = liens.find(l => /(qui-sommes-nous|a-propos|notre-agence|presentation|about-us|carriere)/i.test(l));\n    if (cible && cible.includes(' : ')) {\n        urlRebond = cible.split(' : ')[1].trim();\n    }\n}\n\n// On renvoie toutes les données + nos deux nouvelles variables de décision\nreturn {\n    ...data,\n    needs_rebond: needsRebond,\n    url_rebond: urlRebond\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        400
+      ],
+      "id": "e328f73d-4920-4387-b142-***************************",
+      "name": "Cerveau"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\nlet md = \"\";\n\n// 1. Récupération robuste du Markdown\nif (data.results && Array.isArray(data.results) && data.results[0]) {\n    md = data.results[0].markdown?.raw_markdown || data.results[0].markdown || \"\";\n} else {\n    md = data.markdown?.raw_markdown || data.markdown || \"\";\n}\n\n// Sécurité au cas où Crawl4AI renvoie le texte ailleurs\nif (!md && data.text) md = data.text;\n\n// --- 2. EXTRACTION EMAILS ---\nconst emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/g;\nlet emails = md.match(emailRegex) || [];\nemails = [...new Set(emails.map(e => e.toLowerCase()))]\n    .filter(e => !e.match(/\\.(png|jpg|jpeg|svg|gif|webp|pdf|js|css)$/));\n\n// --- 3. EXTRACTION TÉLÉPHONES (Optimisé pour les numéros locaux et internationaux) ---\n// Capture les formats +226, 00226, et les suites de 8 chiffres standards\nconst phoneRegex = /(?:\\+|00)?(?:226)?[\\s.-]?\\d{2}[\\s.-]?\\d{2}[\\s.-]?\\d{2}[\\s.-]?\\d{2}/g;\nlet phones = md.match(phoneRegex) || [];\nphones = [...new Set(phones.map(p => p.trim()))]\n    .filter(p => {\n        const digits = p.replace(/[^0-9]/g, \"\");\n        return digits.length >= 8 && digits.length <= 15;\n    });\n\n// --- 4. RÉSEAUX SOCIAUX ---\nconst socialDomains = ['facebook.com', 'instagram.com', 'tiktok.com', 'linkedin.com', 'twitter.com', 'x.com', 'youtube.com', 'wa.me'];\nconst noise = ['/sharer', '/intent', '/share', '/p/', '/reels/', '/posts/', '/status/', '/video/', 'scripts', 'plugins', 'group'];\n\nlet links = md.match(/https?:\\/\\/[^\\s)\"]+/g) || [];\nlet socialProfiles = links.filter(link => {\n    const urlLower = link.toLowerCase();\n    const isSocial = socialDomains.some(domain => urlLower.includes(domain));\n    const isNotNoise = !noise.some(bad => urlLower.includes(bad));\n    \n    // Nettoyage de l'URL pour la vérification\n    let cleanLink = link.replace(/^https?:\\/\\/(www\\.)?/, '').split('?')[0];\n    let urlParts = cleanLink.split('/');\n    \n    // On s'assure d'avoir un nom d'utilisateur (ex: facebook.com/binkoo)\n    return isSocial && isNotNoise && urlParts.length > 1 && urlParts[1].length > 1;\n});\n\n// --- 5. ENVOI DES DONNÉES SÉPARÉES ---\nreturn {\n    texte_brut: md, // Le texte intégral est enfin isolé ici !\n    extracted_emails: emails.join(\", \") || \"Non trouvé\",\n    extracted_phones: phones.join(\", \") || \"Non trouvé\",\n    extracted_socials: [...new Set(socialProfiles)].join(\", \") || \"Non trouvé\",\n    ...data // On conserve le reste des données Google Maps\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        160
+      ],
+      "id": "1ba1912e-68ef-45a4-9b45-***************************",
+      "name": "Extracteur de Données Hard1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json;\n\n// On récupère directement le texte isolé par le node précédent !\nlet md = data.texte_brut || \"\";\n\nif (!md) return { texte_ia: \"VIDE\", liens_menu: \"VIDE\", site_url: data.url || \"\" };\n\n// ... (Tout le reste de ton code avec la fonction supprimerBalises, etc., reste intact) ...\n\n// --- 2. FONCTION DE NETTOYAGE ROBUSTE (Sans Regex, sans Map) ---\nfunction supprimerBalises(texte, debut, fin) {\n    let segments = texte.split(debut);\n    let resultat = segments[0];\n    for (let i = 1; i < segments.length; i++) {\n        let positionFin = segments[i].indexOf(fin);\n        if (positionFin !== -1) {\n            resultat += segments[i].substring(positionFin + fin.length);\n        } else {\n            resultat += segments[i];\n        }\n    }\n    return resultat;\n}\n\n// --- 3. EXTRACTION DES LIENS DU MENU ---\nconst liensExtraits = [];\nconst motsInterdits = ['login', 'register', 'cart', 'panier', 'checkout', 'wp-content', 'tag', 'category', 'search', 'recherche', 'property', 'status', 'label'];\n\nlet blocsLiens = md.split('](');\nfor (let i = 0; i < blocsLiens.length - 1; i++) {\n    let partieTexte = blocsLiens[i];\n    let partieUrl = blocsLiens[i+1];\n    \n    let debutTexte = partieTexte.lastIndexOf('[');\n    let finUrl = partieUrl.indexOf(')');\n    \n    if (debutTexte !== -1 && finUrl !== -1) {\n        let texteLien = partieTexte.substring(debutTexte + 1).trim();\n        let urlLien = partieUrl.substring(0, finUrl).trim();\n        \n        let urlBasse = urlLien.toLowerCase();\n        let estInutile = false;\n        for (let mot of motsInterdits) {\n            if (urlBasse.includes(mot)) { estInutile = true; break; }\n        }\n        \n        if (!estInutile && texteLien.length < 50 && urlLien.startsWith('http')) {\n            liensExtraits.push(texteLien + ' : ' + urlLien);\n        }\n    }\n}\n\n// --- 4. NETTOYAGE DU CONTENU ---\nlet textePropre = md;\n\n// Supprimer les images Base64 (très lourd)\ntextePropre = supprimerBalises(textePropre, 'data:image', ')');\n\n// Supprimer les sources \ntextePropre = supprimerBalises(textePropre, '');\n\n// Supprimer les chevrons de Crawl4AI ⟨X⟩\ntextePropre = supprimerBalises(textePropre, '⟨', '⟩');\n\n// Supprimer les balises images Markdown ![alt]\ntextePropre = supprimerBalises(textePropre, '![', ']');\n\n// --- 5. FILTRAGE LIGNE PAR LIGNE ---\nconst lignes = textePropre.split('\\n');\nconst lignesFinales = [];\n\nfor (let ligne of lignes) {\n    let l = ligne.trim();\n    \n    // On enlève les résidus de liens Markdown [Texte](URL) pour ne garder que le Texte\n    while (l.includes('](')) {\n        let debut = l.indexOf('[');\n        let milieu = l.indexOf('](', debut);\n        let fin = l.indexOf(')', milieu);\n        if (debut !== -1 && milieu !== -1 && fin !== -1) {\n            l = l.substring(0, debut) + l.substring(debut + 1, milieu) + l.substring(fin + 1);\n        } else { break; }\n    }\n\n    // Filtrage qualité\n    if (l.length < 60) continue;\n\n    let mots = l.split(' ').filter(m => m.length > 0);\n    let aPonctuation = l.includes('.') || l.includes('!') || l.includes('?');\n    let texteBas = l.toLowerCase();\n    \n    // Éjecter les listes sans ponctuation (ex: listes de quartiers ou services)\n    if (mots.length > 12 && !aPonctuation) continue;\n    \n    // Éjecter les lignes de prix ou budgets isolées\n    if ((texteBas.includes('f cfa') || texteBas.includes('budget')) && !aPonctuation) continue;\n    \n    // Éjecter les caractéristiques techniques courtes\n    if ((texteBas.startsWith('lits:') || texteBas.startsWith('baignoires:') || texteBas.startsWith('parcelle')) && mots.length < 10) continue;\n\n    lignesFinales.push(l);\n}\n\n// --- 6. RÉASSEMBLAGE ET FORMATAGE ---\nlet resultatFinal = lignesFinales.join('\\n\\n');\n\n// Nettoyage des symboles Markdown restants\nresultatFinal = resultatFinal.split('#').join('').split('*').join('').split('`').join('');\n\n// Suppression des doubles espaces\nwhile (resultatFinal.includes('  ')) {\n    resultatFinal = resultatFinal.split('  ').join(' ');\n}\n\n// Déduplication des liens\nconst liensUniques = [...new Set(liensExtraits)];\n\nreturn {\n    texte_ia: resultatFinal.substring(0, 3800).trim() || \"Aucune description pertinente extraite.\",\n    liens_menu: liensUniques.slice(0, 15).join('\\n') || \"Menu non trouvé.\",\n    site_url: data.results?.[0]?.url || data.url || \"\"\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        160
+      ],
+      "id": "22041f15-7604-4f53-aeaf-***************************",
+      "name": "Préparateur de Texte IA1"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "leads",
+          "mode": "list",
+          "cachedResultName": "leads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "etape_sequence": 0,
+            "rank": "={{ $json.rank }}",
+            "scrapedAt": "={{ $json.scrapedAt }}",
+            "reviewsCount": "={{ $json.reviewsCount }}",
+            "businessName": "={{ $json.title }}",
+            "categoryName": "={{ $json.categoryName }}",
+            "address": "={{ $json.street }}",
+            "phoneMaps": "=",
+            "countryCode": "={{ $json.countryCode }}",
+            "neighborhood": "={{ $json.neighborhood }}",
+            "descriptionGmaps": "={{ $json.description }}",
+            "placeUrl": "=",
+            "rating": "={{ $json.totalScore }}",
+            "URLmaps": "={{ $json.url }}",
+            "phone": "={{ $json.phoneUnformatted }}",
+            "statut_sequence": "À envoyer"
+          },
+          "matchingColumns": [
+            "businessName"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "scrapedAt",
+              "displayName": "scrapedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "businessName",
+              "displayName": "businessName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "categoryName",
+              "displayName": "categoryName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "address",
+              "displayName": "address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "phoneMaps",
+              "displayName": "phoneMaps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "phoneWebsite",
+              "displayName": "phoneWebsite",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "rating",
+              "displayName": "rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "reviewsCount",
+              "displayName": "reviewsCount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "descriptionGmaps",
+              "displayName": "descriptionGmaps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "neighborhood",
+              "displayName": "neighborhood",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "countryCode",
+              "displayName": "countryCode",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "rank",
+              "displayName": "rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "URLmaps",
+              "displayName": "URLmaps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "placeUrl",
+              "displayName": "placeUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "website",
+              "displayName": "website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "socialMedia",
+              "displayName": "socialMedia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "descriptionIA",
+              "displayName": "descriptionIA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "statut_sequence",
+              "displayName": "statut_sequence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "etape_sequence",
+              "displayName": "etape_sequence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "date_importation",
+              "displayName": "date_importation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "derniere_interaction",
+              "displayName": "derniere_interaction",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "whatsapp_valides",
+              "displayName": "whatsapp_valides",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "service_cible",
+              "displayName": "service_cible",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "nom_whatsapp",
+              "displayName": "nom_whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -672,
+        32
+      ],
+      "id": "5b4383c1-6880-4b6a-b3ed-***************************",
+      "name": "Supabase - Leads SANS Site",
+      "credentials": {
+        "postgres": {
+          "id": "***************************",
+          "name": "Postgres Supabase pour workflow Cold Outreach BDL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Tu es un expert en analyse de données commerciales, en formatage de numéros de téléphone et en stratégie marketing pour le marché d'Afrique de l'Ouest.\n\nCONTEXTE DU LEAD :\n- Nom de l'entreprise : {{ $('Loop Over Items').item.json.title }}\n- Description / Activité : {{ $json.text }}\n- Site Web : {{ $('Loop Over Items').item.json.website }}\n- Adresse / Quartier : {{ $('Loop Over Items').item.json.address }}, {{ $('Loop Over Items').item.json.neighborhood }}\n- Numéro brut détecté : {{ $json.raw_number }}\n- Code Pays sur Google Maps :{{ $('Code in JavaScript1').item.json.countryCode }}\n\nTA MISSION :\n1. ANALYSE DU NUMÉRO : Vérifie la logique du \"Numéro brut détecté\" en te basant sur le \"Code Pays sur Google Maps\".\n- Si BF (Burkina Faso) : Un numéro mobile (+226) doit comporter exactement 8 chiffres après l'indicatif.\n- Si CI (Côte d'Ivoire) : Un numéro mobile (+225) doit comporter 10 chiffres (ex: commençant par 01, 05, 07, etc).\n- Pour tout autre pays : Adapte-toi aux normes locales de longueur et de préfixe.\nSi le numéro est logique et valide, formate-le strictement au format international (ex: +2250700112233) et assigne-le à `numero_valide`. Si le numéro est manifestement faux ou est une simple année (ex: 2026), la valeur de `numero_valide` DOIT être \"NULL\".\n\n2. CHOIX DU SERVICE CIBLE : Analyse l'activité et la présence en ligne de l'entreprise pour déterminer le service le plus adapté que notre agence (BinkoO Digital Lab) doit lui proposer :\n   - Si l'entreprise n'a PAS de site web (ou si le champ Site Web est vide/indisponible) : Assigne la valeur exacte \"Création d'une vitrine sur internet ou d'un site web professionnel pour attirer de nouveaux clients\" à la clé `service_cible`.\n   - Si l'entreprise POSSÈDE déjà un site web fonctionnel : Assigne la valeur exacte \"Automatisation des processus et assistant virtuel pour faire gagner du temps à l'entreprise\" à la clé `service_cible`.\n\nGénère uniquement l'objet JSON requis contenant les clés `numero_valide` et `service_cible`.\nExmple de format d'output :\n{\n  \"numero_valide\": \"Le numéro bien formaté\",\n  \"service_cible\": \"Le service cible détecté\"\n}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        3232,
+        560
+      ],
+      "id": "897974a0-07ac-42e1-8cfe-***************************",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        3232,
+        752
+      ],
+      "id": "568f01a3-9339-4706-9b08-***************************",
+      "name": "Cohere Chat Model2",
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "let newItems = [];\nlet items = $input.all();\n\nfor (let i = 0; i < items.length; i++) {\n  let leadData = items[i].json;\n  let rawText = (leadData.phone || \"\") + \" \" + (leadData.extracted_phones || \"\");\n  \n  // Retire tout ce qui n'est pas un chiffre ou un \"+\"\n  let cleanText = rawText.replace(/[^\\d+]/g, ' ');\n  \n  // Extrait les suites de 8 chiffres ou plus\n  let matches = cleanText.match(/\\+?\\d{8,15}/g) || [];\n  let uniqueMatches = [...new Set(matches)];\n\n  if (uniqueMatches.length > 0) {\n    for (let num of uniqueMatches) {\n        let newItemData = JSON.parse(JSON.stringify(leadData));\n        newItemData.raw_number = num; \n        newItems.push({ json: newItemData });\n    }\n  } else {\n    let newItemData = JSON.parse(JSON.stringify(leadData));\n    newItemData.raw_number = null;\n    newItems.push({ json: newItemData });\n  }\n}\nreturn newItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        432
+      ],
+      "id": "452ec634-f5bb-4d55-b89b-***************************",
+      "name": "Code in JavaScript",
+      "notes": "Prépare le terrain en formatant les numéros"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2880,
+        432
+      ],
+      "id": "7adfc9c8-faa2-4fea-af12-***************************",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3056,
+        560
+      ],
+      "id": "dbd71829-011f-4893-b195-***************************",
+      "name": "Wait1",
+      "webhookId": "80f009e5-9a84-4aca-a8e7-***************************"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"numero_valide\": \"Le numéro bien formaté\",\n  \"service_cible\": \"Le service cible détecté\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        3376,
+        752
+      ],
+      "id": "42edac5a-c12d-42e3-b78a-***************************",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO leads (\n  \"businessName\", \"phone\", \"whatsapp_valides\", \"service_cible\", \"address\", \n  \"neighborhood\", \"categoryName\", \"website\", \"rating\", \"scrapedAt\", \n  \"statut_sequence\", \"etape_sequence\"\n)\nVALUES (\n  \"{{ $('Loop Over Items').item.json.title }}\",\n  \"{{ $('Loop Over Items').item.json.phone }}\",\n  \"{{ $json.output.numero_valide }}\",\n  \"{{ $json.output.service_cible }}\",\n  \"{{ $('Loop Over Items').item.json.address }}\",\n  \"{{ $('Loop Over Items').item.json.neighborhood }}\",\n  \"{{ $('Loop Over Items').item.json.categoryName }}\",\n  \"{{ $('Loop Over Items').item.json.website }}\",\n  \"{{ $('Loop Over Items').item.json.totalScore }}\",\n  \"{{ $('Loop Over Items').item.json.scrapedAt }}\",\n  'À envoyer',\n  0\n)\nON CONFLICT (\"businessName\") \nDO UPDATE SET\n  \"whatsapp_valides\" = CASE\n    WHEN leads.\"whatsapp_valides\" IS NULL OR leads.\"whatsapp_valides\" = '' THEN EXCLUDED.\"whatsapp_valides\"\n    WHEN EXCLUDED.\"whatsapp_valides\" = 'NULL' THEN leads.\"whatsapp_valides\"\n    WHEN leads.\"whatsapp_valides\" NOT LIKE '%' || EXCLUDED.\"whatsapp_valides\" || '%' THEN leads.\"whatsapp_valides\" || ', ' || EXCLUDED.\"whatsapp_valides\"\n    ELSE leads.\"whatsapp_valides\"\n  END,\n  \"service_cible\" = COALESCE(EXCLUDED.\"service_cible\", leads.\"service_cible\");",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        3616,
+        768
+      ],
+      "id": "95578c49-cd6a-45ef-856f-***************************",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "rnrPZEhlatRi9AYF",
+          "name": "Postgres Supabase pour workflow Cold Outreach BDL"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        3504,
+        400
+      ],
+      "id": "de4d66c2-881a-461a-88cc-***************************",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "chatId": "1748150661",
+        "text": "=⚠️ ALERTE : Échec du Workflow de scraping de leads\n\n🛑 Nœud en cause : {{ $json.execution.error.nodeName }} \n❌ Message d'erreur : {{ $json.execution.error.message }} 🆔 ID Exécution : {{ $json.execution.id }} ",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3712,
+        400
+      ],
+      "id": "c0d61d78-ce2d-4d3d-adfb-***************************",
+      "name": "Send a text message",
+      "webhookId": "e9848d35-b89b-47c9-a1f8-***************************",
+      "credentials": {
+        "telegramApi": {
+          "id": "wHMUYwh9nF24IKIX",
+          "name": "Error tracking bot for all workflows"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.timeSaved",
+      "typeVersion": 1,
+      "position": [
+        4016,
+        624
+      ],
+      "id": "f85d2356-0087-48ec-b73b-***************************",
+      "name": "Time Saved"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "1",
+                    "leftValue": "={{ $json.serviceCible }}",
+                    "rightValue": "CREATION_SITE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Création Site (Pas de site)"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "2",
+                    "leftValue": "={{ $json.serviceCible }}",
+                    "rightValue": "AUTOMATISATION",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Automatisation (Avec site)"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "68576df3-b542-4db9-9dd1-***************************",
+      "name": "Routeur Services",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -880,
+        128
+      ]
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Message": {
+      "main": [
+        [
+          {
+            "node": "Apify Google Maps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify Google Maps": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Routeur Services",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crawl4AI (Scraping Site)": {
+      "main": [
+        [
+          {
+            "node": "Extracteur de Données Hard",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extracteur de Données Hard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Crawl4AI (Scraping Site)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Extraction JSON IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraction JSON IA": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extracteur de Données Hard": {
+      "main": [
+        [
+          {
+            "node": "Préparateur de Texte IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparateur de Texte IA": {
+      "main": [
+        [
+          {
+            "node": "Cerveau",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Le Devineur": {
+      "main": [
+        [
+          {
+            "node": "Crawl4AI (Scraping Site)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crawl4AI (Scraping Site)1": {
+      "main": [
+        [
+          {
+            "node": "Extracteur de Données Hard1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extracteur de Données Hard1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Le Devineur",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extracteur d'URL de Rebond": {
+      "main": [
+        [
+          {
+            "node": "Le Devineur",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sélecteur de Qualité": {
+      "main": [
+        [
+          {
+            "node": "Extracteur d'URL de Rebond",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cerveau": {
+      "main": [
+        [
+          {
+            "node": "Sélecteur de Qualité",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extracteur de Données Hard1": {
+      "main": [
+        [
+          {
+            "node": "Préparateur de Texte IA1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préparateur de Texte IA1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Time Saved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Time Saved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Routeur Services": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Leads SANS Site",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Telegram Trigger": [
+      {
+        "update_id": 826507801,
+        "message": {
+          "message_id": 30,
+          "from": {
+            "id": 1748150661,
+            "is_bot": false,
+            "first_name": "Armel_GUEYE",
+            "last_name": "Armel_GUEYE",
+            "language_code": "en"
+          },
+          "chat": {
+            "id": 1748150661,
+            "first_name": "Armel_GUEYE",
+            "last_name": "Armel_GUEYE",
+            "type": "private"
+          },
+          "date": 1783439740,
+          "text": "Restaurants et maquis; Abidjan; 10",
+          "entities": [
+            {
+              "offset": 0,
+              "length": 34,
+              "type": "bold"
+            }
+          ]
+        }
+      }
+    ],
+    "Error Trigger": [
+      {
+        "execution": {
+          "id": "2957",
+          "url": "https://n8n.srv1090303.hstgr.cloud/workflow/IvbLmxwZi5bXXUlr/executions/2957",
+          "error": {
+            "level": "warning",
+            "tags": {},
+            "description": "To continue the execution when this happens, change the 'On Error' parameter in the root node's settings",
+            "timestamp": 1783381761285,
+            "context": {
+              "outputParserFailReason": "Model output does not match the expected schema"
+            },
+            "functionality": "regular",
+            "name": "NodeOperationError",
+            "node": {
+              "parameters": {
+                "notice": "",
+                "schemaType": "fromJson",
+                "jsonSchemaExample": "{\n  \"numero_valide\": \"Le numéro bien formaté\",\n  \"service_cible\": \"Le service cible détecté\"\n}",
+                "autoFix": false
+              },
+              "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+              "typeVersion": 1.3,
+              "position": [
+                3376,
+                752
+              ],
+              "id": "42edac5a-c12d-42e3-b78a-***************************",
+              "name": "Structured Output Parser"
+            },
+            "messages": [],
+            "message": "Model output doesn't fit required format",
+            "stack": "NodeOperationError: Model output doesn't fit required format\n    at N8nStructuredOutputParser.parse (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/@n8n+n8n-nodes-langchain@file+packages+@n8n+nodes-langchain_4641e55c97a57b54a36e4fe4e399cdc2/node_modules/@n8n/n8n-nodes-langchain/utils/output_parsers/N8nStructuredOutputParser.ts:95:22)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at RunnableLambda.func (/usr/local/lib/node_modules/n8n/node_modules/.pnpm/@n8n+n8n-nodes-langchain@file+packages+@n8n+nodes-langchain_4641e55c97a57b54a36e4fe4e399cdc2/node_modules/@n8n/n8n-nodes-langchain/nodes/agents/Agent/agents/ToolsAgent/common.ts:420:27)\n    at /usr/local/lib/node_modules/n8n/node_modules/.pnpm/@langchain+core@1.1.41_@opentelemetry+api@1.9.0_@opentelemetry+exporter-trace-otlp-prot_eb0ee36a50fbb81989aeaa3277f25459/node_modules/@langchain/core/src/runnables/base.ts:2572:26"
+          },
+          "lastNodeExecuted": "AI Agent",
+          "mode": "webhook",
+          "executionContext": {
+            "version": 1,
+            "establishedAt": 1783381715441,
+            "source": "webhook",
+            "triggerNode": {
+              "name": "Telegram Trigger",
+              "type": "n8n-nodes-base.telegramTrigger"
+            },
+            "redaction": {
+              "version": 2,
+              "production": false,
+              "manual": false,
+              "source": "workflow"
+            }
+          }
+        },
+        "workflow": {
+          "id": "***************************",
+          "name": "BDL Leads scraper"
+        }
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "*********************************************************"
+  }
 }
+
+
+
+
