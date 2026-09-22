@@ -158,7 +158,3 @@ The development workflow was AI-assisted, with technical implementation and syst
 **Full technical overview:** [Kouma Technical Overview](Kouma-Technical-Overview.md)
 
 The technical overview provides a deeper description of the architecture, RAG implementation, AI integrations, API design, security model, deployment, and engineering decisions.
-
-## Public Portfolio Scope
-
-This repository contains public-safe documentation and visual evidence. Credentials, API keys, authentication secrets, private infrastructure details, and proprietary source code are intentionally excluded.
