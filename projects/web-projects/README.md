@@ -39,5 +39,3 @@ Additional screenshots are available in the assets directory.
 ## Client Delivery
 
 Some web work was delivered for clients rather than as standalone personal exercises. Where relevant, the portfolio emphasizes the ability to deliver a complete website and support users after delivery.
-
-Only projects and screenshots authorized for public sharing should be included.
