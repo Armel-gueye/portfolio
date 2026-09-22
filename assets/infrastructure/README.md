@@ -1,6 +1,5 @@
 # Infrastructure Visual Evidence
 
-This folder contains sanitized screenshots documenting Linux/VPS, Docker, service management, deployment/DNS, system resources, and PostHog analytics work.
-
+Visual documentation of Linux/VPS, Docker, service management, deployment and DNS, system resources, application monitoring, and product analytics work.
 
 [Infrastructure documentation →](../../infrastructure/README.md)
