@@ -92,10 +92,6 @@ This experience demonstrates the ability to communicate technical concepts, trai
 
 ![BinkoO Website Architecture](../../assets/binkoo-digital-lab/diagram%20BDL%20Website.png)
 
-## Technical Documentation
-
-[PLACEHOLDER: add an approved public-safe technical overview as technical-overview.md]
-
 ## Project Status
 
 **Type:** Independent personal digital activity
@@ -103,7 +99,3 @@ This experience demonstrates the ability to communicate technical concepts, trai
 BinkoO Digital Lab is an **informal personal activity, not a registered company**. It was created and managed as a practical environment for developing digital, AI, automation, web design, and business skills.
 
 The activity is flexible and can be placed on hold when a full-time professional commitment requires complete availability.
-
-## Public Portfolio Scope
-
-Only public-safe material should be published here. Do not include passwords, API keys, authentication secrets, private infrastructure endpoints, sensitive client information, or proprietary code that should remain private.
