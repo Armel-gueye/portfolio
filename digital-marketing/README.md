@@ -15,8 +15,6 @@ This section documents hands-on digital marketing and community work carried out
 - Meta Ads
 - TikTok Ads
 
-The portfolio describes responsibilities and execution rather than unsupported performance claims.
-
 ## Visual Evidence
 
 Selected examples are shown below.
@@ -28,5 +26,3 @@ Selected examples are shown below.
 ![Digital Marketing Evidence 3](../assets/digital-marketing/Capture%20d'écran%202026-09-21%20145402.png)
 
 ![Digital Marketing Evidence 4](../assets/digital-marketing/Capture%20d'écran%202026-09-21%20145514.png)
-
-Only account screenshots, campaign screenshots, or client materials authorized for public sharing should be included.
