@@ -36,5 +36,3 @@ These systems demonstrate practical experience with:
 - Scheduled and event-driven execution
 - Conditional routing and loops
 - Error handling and operational notifications
-
-Workflow JSON files in this repository are intended as public portfolio evidence and must remain sanitized.
