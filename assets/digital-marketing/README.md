@@ -1,3 +1,3 @@
 # Digital Marketing Assets
 
-`[PLACEHOLDER: add selected public-safe social media, content, visual, or campaign examples]`
+Selected visual examples of social media, content, visual creation, and advertising work.
