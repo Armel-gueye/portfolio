@@ -119,7 +119,3 @@ The development process was AI-assisted, with implementation decisions, integrat
 **Full technical overview:** [AEOBoost Technical Overview](AEOBoost-Technical-Overview.md)
 
 The technical overview documents the application architecture, data model, AI integrations, security design, analytics, deployment, engineering challenges, and current limitations.
-
-## Public Portfolio Scope
-
-This repository contains public-safe documentation and visual evidence. Credentials, API keys, private infrastructure details, authentication secrets, and proprietary source code are intentionally excluded.
