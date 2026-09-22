@@ -1,3 +1,3 @@
 # Web Project Assets
 
-`[PLACEHOLDER: add selected public-safe website and web application screenshots]`
+Visual examples of website and web-interface work.
