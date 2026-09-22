@@ -101,9 +101,7 @@ BinkoO Digital Lab is an **informal personal activity, not a registered company*
 
 ## How I Build
 
-AI tools are part of my development workflow for research, implementation assistance, debugging, documentation, and iteration. This portfolio documents AI-assisted work honestly rather than presenting it as manually written from scratch.
-
-Commercial and private projects are represented through public-safe documentation and visual evidence. Credentials, secrets, private URLs, sensitive infrastructure details, and proprietary source code are excluded.
+AI tools are part of my development workflow for research, implementation assistance, debugging, documentation, and iteration. This portfolio documents AI-assisted work as part of the development process.
 
 ## Portfolio Structure
 
