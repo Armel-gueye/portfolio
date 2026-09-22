@@ -10,7 +10,7 @@ The projects document practical work with Python fundamentals, object-oriented p
 
 ### Python Fundamentals
 
-**Patient Management Project**  
+**OOP exercice**  
 A small object-oriented programming exercise using classes, inheritance, instance attributes, and methods.
 
 [View the code →](foundations/patient-management-project.py)
