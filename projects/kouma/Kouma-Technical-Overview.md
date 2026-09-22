@@ -240,14 +240,7 @@ All custom endpoints reside behind `/api/*` and enforce strict rate limiting, sa
 
 ## 10. Embeddable Widget & Third-Party Integration
 
-The public widget is distributed as a single script tag:
-```html
-<script 
-  src="https://kouma.app/widget.js" 
-  data-bot-id="[REDACTED_UUID]" 
-  data-color="#eb6f1e" 
-  defer>
-</script>
+The public widget is distributed as a single script tag that loads the widget and identifies the configured bot.
 ```
 
 ### Architecture of `widget.js`:
