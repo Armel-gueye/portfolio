@@ -14,6 +14,14 @@ This section contains additional website and web-interface work that complements
 - Website content presentation
 - Practical delivery of business-facing web projects
 
+## Hand-Coded Web Projects
+
+### Web Counter
+
+A small browser-based counter built with HTML, CSS, and JavaScript. It allows the user to increase or decrease a displayed value while preventing the counter from going below zero.
+
+[View the project →](web-counter/README.md)
+
 ## Visual Evidence
 
 Representative website screenshots are stored in `assets/web-projects/`.
