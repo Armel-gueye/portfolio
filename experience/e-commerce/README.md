@@ -32,8 +32,6 @@ The repository includes four Alibaba order receipts documenting the purchasing s
 
 These documents are provided as supporting evidence of actual international sourcing and purchasing activity.
 
-Only documents that contain no sensitive personal, financial, supplier, address, payment, or account information should be published publicly.
-
 ## Context
 
 This was an independent small-scale entrepreneurial activity and is presented in this portfolio as additional practical experience, alongside my technology, automation, web design, and AI projects.
