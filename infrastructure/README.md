@@ -45,7 +45,3 @@ The portfolio includes evidence from Linux/VPS environments, Docker services, DN
 ### Product Analytics
 
 ![PostHog Analytics](../assets/infrastructure/My%20PostHog%20Analytics%20Dashboard.png)
-
-## Security
-
-Only sanitized evidence is published. SSH keys, passwords, API tokens, credentials, private IP addresses, database secrets, and other sensitive configuration must never be committed.
