@@ -49,8 +49,6 @@ Notifications / Error Handling
 
 [workflow.json](workflow.json)
 
-Only a sanitized public version should be published. Remove credentials, email-service secrets, database credentials, private endpoints, and other sensitive configuration.
-
 ## Skills Demonstrated
 
 n8n orchestration, database-driven automation, AI-assisted content generation, email automation, validation, sequencing, SQL operations, controlled processing, and operational monitoring.
