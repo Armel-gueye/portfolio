@@ -71,8 +71,6 @@ It also separates processing based on business context and service needs, allowi
 
 [workflow.json](workflow.json)
 
-The JSON should be kept sanitized. Do not publish credentials, tokens, private database details, or other sensitive configuration.
-
 ## Skills Demonstrated
 
 Workflow automation, web scraping, data extraction and enrichment, AI-assisted qualification, JavaScript data processing, structured outputs, conditional routing, SQL/Supabase operations, batch processing, and operational error handling.
