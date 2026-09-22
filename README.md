@@ -131,5 +131,3 @@ portfolio/
 **AEOBoost:** https://aeoboost.app  
 **Kouma:** https://kouma.app  
 **BinkoO Digital Lab:** https://binkoo.digital
-
-> This portfolio is a living collection of practical work.
