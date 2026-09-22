@@ -13,7 +13,7 @@ The projects document practical work with Python fundamentals, object-oriented p
 **OOP exercice**  
 A small object-oriented programming exercise using classes, inheritance, instance attributes, and methods.
 
-[View the code →](foundations/patient-management-project.py)
+[View the code →](foundations/OOP-exercice)
 
 **Shopping List CLI**  
 A command-line shopping list program for adding, removing, displaying, and clearing items.
