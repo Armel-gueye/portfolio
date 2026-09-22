@@ -17,4 +17,4 @@ This section contains documented applications and development projects.
 - [Web Projects](web-projects/README.md)
 - [Job Offer Aggregator](job-offer-aggregator/README.md)
 
-Each project is documented around what was actually built, the technologies involved, architecture, design, and public-safe evidence.
+Each project is documented around what was actually built, the technologies involved, architecture, design, and supporting evidence.
