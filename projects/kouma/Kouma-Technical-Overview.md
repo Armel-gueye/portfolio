@@ -336,6 +336,3 @@ The `/api/scrape` endpoint resolves target hostnames using Node `dns.promises.lo
 - **Full-Stack Systems Architecture**: Seamless integration of a modern React 18 frontend with a hardened Express backend and managed Postgres.
 - **Defensive Cyber-Security**: End-to-end implementation of session fingerprinting, rate limiting, anti-SSRF validation, input sanitization, and brute-force mitigation.
 - **Product & SaaS Craftsmanship**: Thoughtful user experiences, zero-dependency widget integrations, transactional communications, and strict GDPR privacy engineering.
-
----
-*Document safe for public distribution. All sensitive tokens, database connection strings, and internal infrastructure URLs have been redacted.*
