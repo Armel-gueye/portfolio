@@ -23,7 +23,7 @@ The activity involved the complete process from supplier negotiation and purchas
 
 ## Supporting Evidence
 
-The repository includes four Alibaba order receipts documenting the purchasing side of this activity:
+The repository includes four of many of my Alibaba orders receipts documenting the purchasing side of this activity:
 
 - [Alibaba Order Receipt - 263612130501027081](receipt-263612130501027081.pdf)
 - [Alibaba Order Receipt - 263813046001027081](receipt-263813046001027081.pdf)
